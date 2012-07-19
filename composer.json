@@ -1,0 +1,30 @@
+{
+    "name": "slm/ideal-payment",
+    "description": "Payment module for the Dutch iDEAL payment system",
+    "type": "library",
+    "license": "new-bsd",
+    "keywords": [
+        "ideal",
+        "payment"
+    ],
+    "homepage": "https://github.com/juriansluiman/SlmIdealPayment",
+    "authors": [
+        {
+            "name": "Jurian Sluiman",
+            "email": "jurian@juriansluiman.nl",
+            "homepage": "http://juriansluiman.nl/"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "zendframework/zendframework": "dev-master"
+    },
+    "autoload": {
+        "psr-0": {
+            "SlmIdealPayment": "src/"
+        },
+        "classmap": [
+            "./Module.php"
+        ]
+    }
+}
