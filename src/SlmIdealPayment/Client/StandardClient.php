@@ -40,20 +40,20 @@
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Client;
+namespace SlmIdealPayment\Client;
 
 use SimpleXMLElement;
 use DateTime;
-use SlmIDealPayment\Request\RequestInterface;
+use SlmIdealPayment\Request\RequestInterface;
 
-use SlmIDealPayment\Request\DirectoryRequest;
-use SlmIDealPayment\Response\DirectoryResponse;
+use SlmIdealPayment\Request\DirectoryRequest;
+use SlmIdealPayment\Response\DirectoryResponse;
 
-use SlmIDealPayment\Request\TransactionRequest;
-use SlmIDealPayment\Response\TransactionResponse;
+use SlmIdealPayment\Request\TransactionRequest;
+use SlmIdealPayment\Response\TransactionResponse;
 
-use SlmIDealPayment\Request\StatusRequest;
-use SlmIDealPayment\Response\StatusResponse;
+use SlmIdealPayment\Request\StatusRequest;
+use SlmIdealPayment\Response\StatusResponse;
 
 class StandardClient implements ClientInterface
 {

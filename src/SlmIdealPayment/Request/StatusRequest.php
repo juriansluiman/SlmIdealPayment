@@ -32,7 +32,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIDealPayment
+ * @package     SlmIdealPayment
  * @subpackage  Request
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
@@ -40,8 +40,22 @@
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Request;
+namespace SlmIdealPayment\Request;
 
-class DirectoryRequest extends AbstractRequest
+use SlmIdealPayment\Model\Transaction;
+
+class StatusRequest extends AbstractRequest
 {
+	protected $transaction;
+
+	public function getTransaction()
+	{
+	    return $this->transaction;
+	}
+
+	public function setTransaction(Transaction $transaction)
+	{
+	    $this->transaction = $transaction;
+	    return $this;
+	}
 }

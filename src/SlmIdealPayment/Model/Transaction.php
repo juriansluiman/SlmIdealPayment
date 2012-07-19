@@ -40,7 +40,7 @@
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Model;
+namespace SlmIdealPayment\Model;
 
 class Transaction
 {

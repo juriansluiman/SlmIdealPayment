@@ -32,64 +32,55 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIDealPayment
- * @subpackage  Model
+ * @package     SlmIdealPayment
+ * @subpackage  Request
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Model;
+namespace SlmIdealPayment\Request;
 
-use SlmIDealPayment\Exception;
+use SlmIdealPayment\Model\Issuer;
+use SlmIdealPayment\Model\Transaction;
 
-class Issuer
+class TransactionRequest extends AbstractRequest
 {
-	const TYPE_SHORT = 'Short';
-	const TYPE_LONG  = 'Long';
+	protected $issuer;
+	protected $transaction;
+	protected $returnUrl;
 
-	protected $id;
-	protected $name;
-	protected $type;
-
-	public function getId()
+	public function getIssuer()
 	{
-	    return $this->id;
+	    return $this->issuer;
 	}
 
-	public function setId($id)
+	public function setIssuer(Issuer $issuer)
 	{
-	    $this->id = $id;
+	    $this->issuer = $issuer;
 	    return $this;
 	}
 
-	public function getName()
+	public function getTransaction()
 	{
-	    return $this->name;
+	    return $this->transaction;
 	}
 
-	public function setName($name)
+	public function setTransaction(Transaction $transaction)
 	{
-	    $this->name = $name;
+	    $this->transaction = $transaction;
 	    return $this;
 	}
 
-	public function getType()
+	public function getReturnUrl()
 	{
-	    return $this->type;
+	    return $this->returnUrl;
 	}
 
-	public function setType($type)
+	public function setReturnUrl($returnUrl)
 	{
-		if (!in_array($type, array(self::TYPE_SHORT, self::TYPE_LONG))) {
-			throw new Exception\InvalidArgumentException(
-				'Type must be "%s" or "%s", "%s" given',
-				self::TYPE_SHORT, self::TYPE_LONG, $type
-			);
-		}
-
-	    $this->type = $type;
+	    $this->returnUrl = $returnUrl;
 	    return $this;
 	}
 }

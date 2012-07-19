@@ -32,54 +32,40 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIDealPayment
- * @subpackage  Response
+ * @package     SlmIdealPayment
+ * @subpackage  Request
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Response;
+namespace SlmIdealPayment\Request;
 
-use SlmIDealPayment\Model\Transaction;
-
-class StatusResponse extends AbstractResponse
+abstract class AbstractRequest
 {
-	protected $transaction;
-	protected $signatureValue;
-	protected $fingerprint;
+	protected $merchantId;
+	protected $subId;
 
-	public function getTransaction()
+	public function getMerchantId()
 	{
-	    return $this->transaction;
+	    return $this->merchantId;
 	}
 
-	public function setTransaction(Transaction $transaction)
+	public function setMerchantId($merchantId)
 	{
-	    $this->transaction = $transaction;
+	    $this->merchantId = $merchantId;
 	    return $this;
 	}
 
-	public function getSignatureValue()
+	public function getSubId()
 	{
-	    return $this->signatureValue;
+	    return $this->subId;
 	}
 
-	public function setSignature($signatureValue)
+	public function setSubId($subId)
 	{
-	    $this->signatureValue = $signatureValue;
-	    return $this;
-	}
-
-	public function getFingerprint()
-	{
-	    return $this->fingerprint;
-	}
-
-	public function setFingerprint($fingerprint)
-	{
-	    $this->fingerprint = $fingerprint;
+	    $this->subId = $subId;
 	    return $this;
 	}
 }

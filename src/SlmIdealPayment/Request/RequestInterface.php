@@ -32,7 +32,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIDealPayment
+ * @package     SlmIdealPayment
  * @subpackage  Request
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
@@ -40,47 +40,12 @@
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Request;
+namespace SlmIdealPayment\Request;
 
-use SlmIDealPayment\Model\Issuer;
-use SlmIDealPayment\Model\Transaction;
-
-class TransactionRequest extends AbstractRequest
+interface RequestInterface
 {
-	protected $issuer;
-	protected $transaction;
-	protected $returnUrl;
-
-	public function getIssuer()
-	{
-	    return $this->issuer;
-	}
-
-	public function setIssuer(Issuer $issuer)
-	{
-	    $this->issuer = $issuer;
-	    return $this;
-	}
-
-	public function getTransaction()
-	{
-	    return $this->transaction;
-	}
-
-	public function setTransaction(Transaction $transaction)
-	{
-	    $this->transaction = $transaction;
-	    return $this;
-	}
-
-	public function getReturnUrl()
-	{
-	    return $this->returnUrl;
-	}
-
-	public function setReturnUrl($returnUrl)
-	{
-	    $this->returnUrl = $returnUrl;
-	    return $this;
-	}
+	public function getMerchantId();
+	public function setMerchantId($merchantId);
+	public function getSubId();
+	public function setSubId($subId);
 }

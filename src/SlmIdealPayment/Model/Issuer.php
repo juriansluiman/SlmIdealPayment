@@ -32,40 +32,64 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIDealPayment
- * @subpackage  Request
+ * @package     SlmIdealPayment
+ * @subpackage  Model
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Request;
+namespace SlmIdealPayment\Model;
 
-abstract class AbstractRequest
+use SlmIdealPayment\Exception;
+
+class Issuer
 {
-	protected $merchantId;
-	protected $subId;
+	const TYPE_SHORT = 'Short';
+	const TYPE_LONG  = 'Long';
 
-	public function getMerchantId()
+	protected $id;
+	protected $name;
+	protected $type;
+
+	public function getId()
 	{
-	    return $this->merchantId;
+	    return $this->id;
 	}
 
-	public function setMerchantId($merchantId)
+	public function setId($id)
 	{
-	    $this->merchantId = $merchantId;
+	    $this->id = $id;
 	    return $this;
 	}
 
-	public function getSubId()
+	public function getName()
 	{
-	    return $this->subId;
+	    return $this->name;
 	}
 
-	public function setSubId($subId)
+	public function setName($name)
 	{
-	    $this->subId = $subId;
+	    $this->name = $name;
+	    return $this;
+	}
+
+	public function getType()
+	{
+	    return $this->type;
+	}
+
+	public function setType($type)
+	{
+		if (!in_array($type, array(self::TYPE_SHORT, self::TYPE_LONG))) {
+			throw new Exception\InvalidArgumentException(
+				'Type must be "%s" or "%s", "%s" given',
+				self::TYPE_SHORT, self::TYPE_LONG, $type
+			);
+		}
+
+	    $this->type = $type;
 	    return $this;
 	}
 }

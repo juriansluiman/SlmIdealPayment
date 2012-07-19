@@ -32,18 +32,42 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIDealPayment
- * @subpackage  Model
+ * @package     SlmIdealPayment
+ * @subpackage  Response
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Model;
+namespace SlmIdealPayment\Response;
 
-use ArrayObject;
+use SlmIdealPayment\Model\Transaction;
 
-class IssuerCollection extends ArrayObject
+class DirectoryResponse extends AbstractResponse
 {
+	protected $authenticationUrl;
+	protected $transaction;
+
+	public function getAuthenticationUrl()
+	{
+	    return $this->authenticationUrl;
+	}
+
+	public function setAuthenticationUrl($authenticationUrl)
+	{
+	    $this->authenticationUrl = $authenticationUrl;
+	    return $this;
+	}
+
+	public function getTransaction()
+	{
+	    return $this->transaction;
+	}
+
+	public function setTransaction(Transaction $transaction)
+	{
+	    $this->transaction = $transaction;
+	    return $this;
+	}
 }

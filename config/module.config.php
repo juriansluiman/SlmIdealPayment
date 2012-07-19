@@ -39,7 +39,7 @@
  * @link        http://juriansluiman.nl
  */
 
-use SlmIDealPayment\Client\StandardClient;
+use SlmIdealPayment\Client\StandardClient;
 
 return array(
 	'ideal' => array(

@@ -33,19 +33,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package     SlmIdealPayment
- * @subpackage  Client
+ * @subpackage  Request
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Client\Standard;
+namespace SlmIdealPayment\Request;
 
-use SlmIDealPayment\Client\StandardClient;
-
-class Rabobank extends StandardClient
+class DirectoryRequest extends AbstractRequest
 {
-	const URL_LIVE = 'https://ideal.rabobank.nl/ideal/iDeal';
-	const URL_TEST = 'https://idealtest.rabobank.nl/ideal/iDeal';
 }

@@ -32,30 +32,18 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIDealPayment
- * @subpackage  Response
+ * @package     SlmIdealPayment
+ * @subpackage  Model
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Response;
+namespace SlmIdealPayment\Model;
 
-use SlmIDealPayment\Model\IssuerCollection;
+use ArrayObject;
 
-class DirectoryResponse extends AbstractResponse
+class IssuerCollection extends ArrayObject
 {
-	protected $issuers;
-
-	public function getIssuers()
-	{
-	    return $this->issuers;
-	}
-
-	public function setIssuers(IssuerCollection $issuers)
-	{
-	    $this->issuers = $issuers;
-	    return $this;
-	}
 }

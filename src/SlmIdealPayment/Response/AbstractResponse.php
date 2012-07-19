@@ -33,19 +33,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package     SlmIdealPayment
- * @subpackage  Client
+ * @subpackage  Response
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIDealPayment\Client\Standard;
+namespace SlmIdealPayment\Response;
 
-use SlmIDealPayment\Client\StandardClient;
-
-class Ing extends StandardClient
+abstract class AbstractResponse
 {
-	const URL_LIVE = 'https://ideal.secure-ing.com/ideal/iDeal';
-	const URL_TEST = 'https://idealtest.secure-ing.com/ideal/iDeal';
+	protected $aquirer;
+
+	public function getAcquirer()
+	{
+	    return $this->acquirer;
+	}
+
+	public function setAcquirer($acquirer)
+	{
+	    $this->acquirer = $acquirer;
+	    return $this;
+	}
 }
