@@ -127,7 +127,9 @@ class StandardClient implements ClientInterface
 			$request->getMerchantId(),
 			$request->getSubId()
 		));
-		$response = $this->send($xml);
+		$response = $this->send($message);
+
+		var_dump($response);
 
 		$response = new DirectoryResponse;
 
@@ -152,12 +154,12 @@ class StandardClient implements ClientInterface
             $request->getTransaction()->getEntranceCode()
 		));
 
-		$xml->Merchant->addChild('merchantReturnURL', $request->getReturnUrl());
+		$message->Merchant->addChild('merchantReturnURL', $request->getReturnUrl());
 
-        $issuer = $xml->addChild('Issuer');
+        $issuer = $message->addChild('Issuer');
         $issuer->addChild('issuerID', $request->getIssuer()->getId());
 
-        $transaction = $xml->addChild('Transaction');
+        $transaction = $message->addChild('Transaction');
 		$transaction->addChild('purchaseID',       $request->getTransaction()->getPurchaseId());
 		$transaction->addChild('amount',           $request->getTransaction()->getAmount());
 		$transaction->addChild('currency',         $request->getTransaction()->getCurrency());
@@ -166,7 +168,7 @@ class StandardClient implements ClientInterface
 		$transaction->addChild('description',      $request->getTransaction()->getDescription());
 		$transaction->addChild('entranceCode',     $request->getTransaction()->getEntranceCode());
 
-		$response = $this->send($xml);
+		$response = $this->send($message);
 		$response = new TransactionResponse;
 
 		return $response;
@@ -183,10 +185,10 @@ class StandardClient implements ClientInterface
             $request->getTransaction()->getTransactionId()
 		));
 
-		$transaction = $xml->addChild('Transaction');
+		$transaction = $message->addChild('Transaction');
         $transaction->addChild('transactionID', $request->getTransaction()->getTransactionId());
 
-		$response = $this->send($xml);
+		$response = $this->send($message);
 		$response = new StatusResponse;
 
 		return $response;
@@ -195,7 +197,7 @@ class StandardClient implements ClientInterface
 	protected function createMessage(RequestInterface $request, array $signedFields = array())
 	{
 		$class = get_class($request);
-		$class = substr($class, strrpos($class, '\\'));
+		$class = substr($class, strrpos($class, '\\') + 1);
 
 		switch ($class) {
 			case 'DirectoryRequest':
@@ -215,9 +217,8 @@ class StandardClient implements ClientInterface
         $xml->addAttribute('version', '1.1.0');
 
         // Every message needs a time stamp
-        $date  = new DateTime;
-        $stamp = $date->format('c');
-        $xml->addChild('createDateTimeStamp', $stamp);
+        $date  = gmdate('Y-m-d\TH:i:s.000\Z');
+        $xml->addChild('createDateTimeStamp', $date);
 
         // Set standard fields
         $merchant = $xml->addChild('Merchant');
@@ -227,17 +228,17 @@ class StandardClient implements ClientInterface
 
         // Set cryptographic fields
         $fingerprint = $this->getFingerprint();
-        $signature   = $this->getMessageSignature($stamp, $signedFields);
+        $signature   = $this->getMessageSignature($date, $signedFields);
 
         $merchant->addChild('token', $fingerprint);
-        $merchant->addChild('tokenCode', $tokenCode);
+        $merchant->addChild('tokenCode', $signature);
 
         return $xml;
 	}
 
 	protected function getFingerprint($public = false)
 	{
-		$certificate = ($public) ? $this->getPublicCertificate() : getPrivateCertificate();
+		$certificate = ($public) ? $this->getPublicCertificate() : $this->getPrivateCertificate();
 
         if (false === ($fp = fopen($certificate, 'r'))) {
             throw new Exception\CertificateNotFoundException(
@@ -295,5 +296,21 @@ class StandardClient implements ClientInterface
 
         openssl_free_key($privateKey);
         return base64_encode($signature);
+	}
+
+	protected function send(SimpleXMLElement $xml)
+	{
+		$data = $xml->asXml();
+		$ch   = curl_init($this->getRequestUrl());
+
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_SSLVERSION, 3);
+
+        return curl_exec($ch);
 	}
 }
