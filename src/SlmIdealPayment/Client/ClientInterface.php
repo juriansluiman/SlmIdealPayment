@@ -40,7 +40,7 @@
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIdealPayment;
+namespace SlmIdealPayment\Client;
 
 use SlmIdealPayment\Request\DirectoryRequest;
 use SlmIdealPayment\Response\DirectoryResponse;

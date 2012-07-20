@@ -42,7 +42,7 @@
 
 namespace SlmIdealPayment\Request;
 
-abstract class AbstractRequest
+abstract class AbstractRequest implements RequestInterface
 {
 	protected $merchantId;
 	protected $subId;
