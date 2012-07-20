@@ -46,28 +46,28 @@ use SlmIdealPayment\Model\Transaction;
 
 class DirectoryResponse extends AbstractResponse
 {
-	protected $authenticationUrl;
-	protected $transaction;
+    protected $authenticationUrl;
+    protected $transaction;
 
-	public function getAuthenticationUrl()
-	{
-	    return $this->authenticationUrl;
-	}
+    public function getAuthenticationUrl()
+    {
+        return $this->authenticationUrl;
+    }
 
-	public function setAuthenticationUrl($authenticationUrl)
-	{
-	    $this->authenticationUrl = $authenticationUrl;
-	    return $this;
-	}
+    public function setAuthenticationUrl($authenticationUrl)
+    {
+        $this->authenticationUrl = $authenticationUrl;
+        return $this;
+    }
 
-	public function getTransaction()
-	{
-	    return $this->transaction;
-	}
+    public function getTransaction()
+    {
+        return $this->transaction;
+    }
 
-	public function setTransaction(Transaction $transaction)
-	{
-	    $this->transaction = $transaction;
-	    return $this;
-	}
+    public function setTransaction(Transaction $transaction)
+    {
+        $this->transaction = $transaction;
+        return $this;
+    }
 }

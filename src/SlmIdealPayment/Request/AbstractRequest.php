@@ -44,28 +44,28 @@ namespace SlmIdealPayment\Request;
 
 abstract class AbstractRequest implements RequestInterface
 {
-	protected $merchantId;
-	protected $subId;
+    protected $merchantId;
+    protected $subId;
 
-	public function getMerchantId()
-	{
-	    return $this->merchantId;
-	}
+    public function getMerchantId()
+    {
+        return $this->merchantId;
+    }
 
-	public function setMerchantId($merchantId)
-	{
-	    $this->merchantId = $merchantId;
-	    return $this;
-	}
+    public function setMerchantId($merchantId)
+    {
+        $this->merchantId = $merchantId;
+        return $this;
+    }
 
-	public function getSubId()
-	{
-	    return $this->subId;
-	}
+    public function getSubId()
+    {
+        return $this->subId;
+    }
 
-	public function setSubId($subId)
-	{
-	    $this->subId = $subId;
-	    return $this;
-	}
+    public function setSubId($subId)
+    {
+        $this->subId = $subId;
+        return $this;
+    }
 }

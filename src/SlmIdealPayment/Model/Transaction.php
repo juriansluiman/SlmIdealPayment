@@ -44,126 +44,126 @@ namespace SlmIdealPayment\Model;
 
 class Transaction
 {
-	const STATUS_UNKNOWN   = 'Unknown';
-	const STATUS_OPEN      = 'Open';
-	const STATUS_SUCCESS   = 'Success';
-	const STATUS_FAILURE   = 'Failure';
-	const STATUS_CANCELLED = 'Cancelled';
-	const STATUS_EXPIRED   = 'Expired';
+    const STATUS_UNKNOWN   = 'Unknown';
+    const STATUS_OPEN      = 'Open';
+    const STATUS_SUCCESS   = 'Success';
+    const STATUS_FAILURE   = 'Failure';
+    const STATUS_CANCELLED = 'Cancelled';
+    const STATUS_EXPIRED   = 'Expired';
 
-	protected $purchaseId;
-	protected $amount;
-	protected $expirationPeriod;
-	protected $description;
-	protected $entranceCode;
-	protected $transactionId;
+    protected $purchaseId;
+    protected $amount;
+    protected $expirationPeriod;
+    protected $description;
+    protected $entranceCode;
+    protected $transactionId;
 
-	protected $status = self::STATUS_UNKNOWN;
-	protected $consumer;
+    protected $status = self::STATUS_UNKNOWN;
+    protected $consumer;
 
-	protected $language = 'nl';
-	protected $currency = 'EUR';
+    protected $language = 'nl';
+    protected $currency = 'EUR';
 
-	public function getPurchaseId()
-	{
-	    return $this->purchaseId;
-	}
+    public function getPurchaseId()
+    {
+        return $this->purchaseId;
+    }
 
-	public function setPurchaseId($purchaseId)
-	{
-	    $this->purchaseId = $purchaseId;
-	    return $this;
-	}
+    public function setPurchaseId($purchaseId)
+    {
+        $this->purchaseId = $purchaseId;
+        return $this;
+    }
 
-	public function getAmount()
-	{
-	    return $this->amount;
-	}
+    public function getAmount()
+    {
+        return $this->amount;
+    }
 
-	public function setAmount($amount)
-	{
-	    $this->amount = $amount;
-	    return $this;
-	}
+    public function setAmount($amount)
+    {
+        $this->amount = $amount;
+        return $this;
+    }
 
-	public function getExpirationPeriod()
-	{
-	    return $this->expirationPeriod;
-	}
+    public function getExpirationPeriod()
+    {
+        return $this->expirationPeriod;
+    }
 
-	public function setExpirationPeriod($expirationPeriod)
-	{
-	    $this->expirationPeriod = $expirationPeriod;
-	    return $this;
-	}
+    public function setExpirationPeriod($expirationPeriod)
+    {
+        $this->expirationPeriod = $expirationPeriod;
+        return $this;
+    }
 
-	public function getDescription()
-	{
-	    return $this->description;
-	}
+    public function getDescription()
+    {
+        return $this->description;
+    }
 
-	public function setDescription($description)
-	{
-	    $this->description = $description;
-	    return $this;
-	}
+    public function setDescription($description)
+    {
+        $this->description = $description;
+        return $this;
+    }
 
-	public function getEntranceCode()
-	{
-	    return $this->entranceCode;
-	}
+    public function getEntranceCode()
+    {
+        return $this->entranceCode;
+    }
 
-	public function setEntranceCode($entranceCode)
-	{
-	    $this->entranceCode = $entranceCode;
-	    return $this;
-	}
+    public function setEntranceCode($entranceCode)
+    {
+        $this->entranceCode = $entranceCode;
+        return $this;
+    }
 
-	public function getTransactionId()
-	{
-	    return $this->transactionId;
-	}
+    public function getTransactionId()
+    {
+        return $this->transactionId;
+    }
 
-	public function setTransactionId($transactionId)
-	{
-	    $this->transactionId = $transactionId;
-	    return $this;
-	}
+    public function setTransactionId($transactionId)
+    {
+        $this->transactionId = $transactionId;
+        return $this;
+    }
 
-	public function getStatus()
-	{
-	    return $this->status;
-	}
+    public function getStatus()
+    {
+        return $this->status;
+    }
 
-	public function setStatus($status)
-	{
-		if (!in_array($status, array(
-			self::STATUS_UNKNOWN, self::STATUS_OPEN, self::STATUS_SUCCESS, self::STATUS_FAILURE, self::STATUS_CANCELLED, self::STATUS_EXPIRED
-		))) {
-			throw new Exception\InvalidArgumentException(
-				'Cannot set status, "%s" is an invalid status', $status
-			);
-		}
+    public function setStatus($status)
+    {
+        if (!in_array($status, array(
+            self::STATUS_UNKNOWN, self::STATUS_OPEN, self::STATUS_SUCCESS, self::STATUS_FAILURE, self::STATUS_CANCELLED, self::STATUS_EXPIRED
+        ))) {
+            throw new Exception\InvalidArgumentException(
+                'Cannot set status, "%s" is an invalid status', $status
+            );
+        }
 
-	    $this->status = $status;
-	    return $this;
-	}
+        $this->status = $status;
+        return $this;
+    }
 
-	public function getConsumer()
-	{
-		if (self::STATUS_UNKNOWN === $this->getStatus()) {
-			throw new Exception\RuntimeException(
-				'Cannot get consumer, status of transaction is unkown'
-			);
-		}
+    public function getConsumer()
+    {
+        if (self::STATUS_UNKNOWN === $this->getStatus()) {
+            throw new Exception\RuntimeException(
+                'Cannot get consumer, status of transaction is unkown'
+            );
+        }
 
-	    return $this->consumer;
-	}
+        return $this->consumer;
+    }
 
-	public function setConsumer(Consumer $consumer)
-	{
-	    $this->consumer = $consumer;
-	    return $this;
-	}
+    public function setConsumer(Consumer $consumer)
+    {
+        $this->consumer = $consumer;
+        return $this;
+    }
 
 }

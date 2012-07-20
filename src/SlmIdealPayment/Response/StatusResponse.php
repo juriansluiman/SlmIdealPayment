@@ -46,40 +46,40 @@ use SlmIdealPayment\Model\Transaction;
 
 class StatusResponse extends AbstractResponse
 {
-	protected $transaction;
-	protected $signatureValue;
-	protected $fingerprint;
+    protected $transaction;
+    protected $signatureValue;
+    protected $fingerprint;
 
-	public function getTransaction()
-	{
-	    return $this->transaction;
-	}
+    public function getTransaction()
+    {
+        return $this->transaction;
+    }
 
-	public function setTransaction(Transaction $transaction)
-	{
-	    $this->transaction = $transaction;
-	    return $this;
-	}
+    public function setTransaction(Transaction $transaction)
+    {
+        $this->transaction = $transaction;
+        return $this;
+    }
 
-	public function getSignatureValue()
-	{
-	    return $this->signatureValue;
-	}
+    public function getSignatureValue()
+    {
+        return $this->signatureValue;
+    }
 
-	public function setSignature($signatureValue)
-	{
-	    $this->signatureValue = $signatureValue;
-	    return $this;
-	}
+    public function setSignature($signatureValue)
+    {
+        $this->signatureValue = $signatureValue;
+        return $this;
+    }
 
-	public function getFingerprint()
-	{
-	    return $this->fingerprint;
-	}
+    public function getFingerprint()
+    {
+        return $this->fingerprint;
+    }
 
-	public function setFingerprint($fingerprint)
-	{
-	    $this->fingerprint = $fingerprint;
-	    return $this;
-	}
+    public function setFingerprint($fingerprint)
+    {
+        $this->fingerprint = $fingerprint;
+        return $this;
+    }
 }

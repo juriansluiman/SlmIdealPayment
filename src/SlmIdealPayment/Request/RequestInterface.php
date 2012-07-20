@@ -44,8 +44,8 @@ namespace SlmIdealPayment\Request;
 
 interface RequestInterface
 {
-	public function getMerchantId();
-	public function setMerchantId($merchantId);
-	public function getSubId();
-	public function setSubId($subId);
+    public function getMerchantId();
+    public function setMerchantId($merchantId);
+    public function getSubId();
+    public function setSubId($subId);
 }

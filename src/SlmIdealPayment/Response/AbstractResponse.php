@@ -44,16 +44,16 @@ namespace SlmIdealPayment\Response;
 
 abstract class AbstractResponse
 {
-	protected $aquirer;
+    protected $aquirer;
 
-	public function getAcquirer()
-	{
-	    return $this->acquirer;
-	}
+    public function getAcquirer()
+    {
+        return $this->acquirer;
+    }
 
-	public function setAcquirer($acquirer)
-	{
-	    $this->acquirer = $acquirer;
-	    return $this;
-	}
+    public function setAcquirer($acquirer)
+    {
+        $this->acquirer = $acquirer;
+        return $this;
+    }
 }

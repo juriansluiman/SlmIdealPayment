@@ -44,40 +44,40 @@ namespace SlmIdealPayment\Model;
 
 class Consumer
 {
-	protected $name;
-	protected $accountNumber;
-	protected $city;
+    protected $name;
+    protected $accountNumber;
+    protected $city;
 
-	public function getName()
-	{
-	    return $this->name;
-	}
+    public function getName()
+    {
+        return $this->name;
+    }
 
-	public function setName($name)
-	{
-	    $this->name = $name;
-	    return $this;
-	}
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
 
-	public function getAccountNumber()
-	{
-	    return $this->accountNumber;
-	}
+    public function getAccountNumber()
+    {
+        return $this->accountNumber;
+    }
 
-	public function setAccountNumber($accountNumber)
-	{
-	    $this->accountNumber = $accountNumber;
-	    return $this;
-	}
+    public function setAccountNumber($accountNumber)
+    {
+        $this->accountNumber = $accountNumber;
+        return $this;
+    }
 
-	public function getCity()
-	{
-	    return $this->city;
-	}
+    public function getCity()
+    {
+        return $this->city;
+    }
 
-	public function setCity($city)
-	{
-	    $this->city = $city;
-	    return $this;
-	}
+    public function setCity($city)
+    {
+        $this->city = $city;
+        return $this;
+    }
 }

@@ -47,40 +47,40 @@ use SlmIdealPayment\Model\Transaction;
 
 class TransactionRequest extends AbstractRequest
 {
-	protected $issuer;
-	protected $transaction;
-	protected $returnUrl;
+    protected $issuer;
+    protected $transaction;
+    protected $returnUrl;
 
-	public function getIssuer()
-	{
-	    return $this->issuer;
-	}
+    public function getIssuer()
+    {
+        return $this->issuer;
+    }
 
-	public function setIssuer(Issuer $issuer)
-	{
-	    $this->issuer = $issuer;
-	    return $this;
-	}
+    public function setIssuer(Issuer $issuer)
+    {
+        $this->issuer = $issuer;
+        return $this;
+    }
 
-	public function getTransaction()
-	{
-	    return $this->transaction;
-	}
+    public function getTransaction()
+    {
+        return $this->transaction;
+    }
 
-	public function setTransaction(Transaction $transaction)
-	{
-	    $this->transaction = $transaction;
-	    return $this;
-	}
+    public function setTransaction(Transaction $transaction)
+    {
+        $this->transaction = $transaction;
+        return $this;
+    }
 
-	public function getReturnUrl()
-	{
-	    return $this->returnUrl;
-	}
+    public function getReturnUrl()
+    {
+        return $this->returnUrl;
+    }
 
-	public function setReturnUrl($returnUrl)
-	{
-	    $this->returnUrl = $returnUrl;
-	    return $this;
-	}
+    public function setReturnUrl($returnUrl)
+    {
+        $this->returnUrl = $returnUrl;
+        return $this;
+    }
 }

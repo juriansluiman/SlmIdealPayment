@@ -46,50 +46,50 @@ use SlmIdealPayment\Exception;
 
 class Issuer
 {
-	const TYPE_SHORT = 'Short';
-	const TYPE_LONG  = 'Long';
+    const TYPE_SHORT = 'Short';
+    const TYPE_LONG  = 'Long';
 
-	protected $id;
-	protected $name;
-	protected $type;
+    protected $id;
+    protected $name;
+    protected $type;
 
-	public function getId()
-	{
-	    return $this->id;
-	}
+    public function getId()
+    {
+        return $this->id;
+    }
 
-	public function setId($id)
-	{
-	    $this->id = $id;
-	    return $this;
-	}
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
 
-	public function getName()
-	{
-	    return $this->name;
-	}
+    public function getName()
+    {
+        return $this->name;
+    }
 
-	public function setName($name)
-	{
-	    $this->name = $name;
-	    return $this;
-	}
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
 
-	public function getType()
-	{
-	    return $this->type;
-	}
+    public function getType()
+    {
+        return $this->type;
+    }
 
-	public function setType($type)
-	{
-		if (!in_array($type, array(self::TYPE_SHORT, self::TYPE_LONG))) {
-			throw new Exception\InvalidArgumentException(
-				'Type must be "%s" or "%s", "%s" given',
-				self::TYPE_SHORT, self::TYPE_LONG, $type
-			);
-		}
+    public function setType($type)
+    {
+        if (!in_array($type, array(self::TYPE_SHORT, self::TYPE_LONG))) {
+            throw new Exception\InvalidArgumentException(
+                'Type must be "%s" or "%s", "%s" given',
+                self::TYPE_SHORT, self::TYPE_LONG, $type
+            );
+        }
 
-	    $this->type = $type;
-	    return $this;
-	}
+        $this->type = $type;
+        return $this;
+    }
 }

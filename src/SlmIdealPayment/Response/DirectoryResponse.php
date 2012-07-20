@@ -46,16 +46,16 @@ use SlmIdealPayment\Model\IssuerCollection;
 
 class DirectoryResponse extends AbstractResponse
 {
-	protected $issuers;
+    protected $issuers;
 
-	public function getIssuers()
-	{
-	    return $this->issuers;
-	}
+    public function getIssuers()
+    {
+        return $this->issuers;
+    }
 
-	public function setIssuers(IssuerCollection $issuers)
-	{
-	    $this->issuers = $issuers;
-	    return $this;
-	}
+    public function setIssuers(IssuerCollection $issuers)
+    {
+        $this->issuers = $issuers;
+        return $this;
+    }
 }

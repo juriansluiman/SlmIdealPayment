@@ -53,40 +53,40 @@ use SlmIdealPayment\Response\StatusResponse;
 
 interface ClientInterface
 {
-	/**
-	 * Perform request to get directory of issuers
-	 *
-	 * The returned response contains a list of all issuers connected
-	 * to the iDeal service. If not successfull, the response contains
-	 * the error message from the request and the information about the
-	 * failure.
-	 *
-	 * @param  DirectoryRequest $request Request parameters
-	 * @return DirectoryResponse         Response from request
-	 */
-	public function sendDirectoryRequest(DirectoryRequest $request);
+    /**
+     * Perform request to get directory of issuers
+     *
+     * The returned response contains a list of all issuers connected
+     * to the iDeal service. If not successfull, the response contains
+     * the error message from the request and the information about the
+     * failure.
+     *
+     * @param  DirectoryRequest $request Request parameters
+     * @return DirectoryResponse         Response from request
+     */
+    public function sendDirectoryRequest(DirectoryRequest $request);
 
-	/**
-	 * Perform request to start a transaction
-	 *
-	 * The returned response contains information about the transaction
-	 * to start. If not successfull, the response contains the error
-	 * message from the request and the information about the failure.
-	 *
-	 * @param  TransactionRequest $request Request parameters
-	 * @return TransactionResponse         Response from request
-	 */
-	public function sendTransactionRequest(TransactionRequest $request);
+    /**
+     * Perform request to start a transaction
+     *
+     * The returned response contains information about the transaction
+     * to start. If not successfull, the response contains the error
+     * message from the request and the information about the failure.
+     *
+     * @param  TransactionRequest $request Request parameters
+     * @return TransactionResponse         Response from request
+     */
+    public function sendTransactionRequest(TransactionRequest $request);
 
-	/**
-	 * Perform request to check status of transaction
-	 *
-	 * The returned response contains the status of a previously started
-	 * transaction. If not successfull, the response contains the error
-	 * message from the request and the information about the failure.
-	 *
-	 * @param  TransactionRequest $request Request parameters
-	 * @return TransactionResponse         Response from request
-	 */
-	public function sendStatusRequest(StatusRequest $request);
+    /**
+     * Perform request to check status of transaction
+     *
+     * The returned response contains the status of a previously started
+     * transaction. If not successfull, the response contains the error
+     * message from the request and the information about the failure.
+     *
+     * @param  TransactionRequest $request Request parameters
+     * @return TransactionResponse         Response from request
+     */
+    public function sendStatusRequest(StatusRequest $request);
 }

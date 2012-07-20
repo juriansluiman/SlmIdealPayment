@@ -57,92 +57,92 @@ use SlmIdealPayment\Response\StatusResponse;
 
 class StandardClient implements ClientInterface
 {
-	protected $requestUrl;
-	protected $publicCertificate;
-	protected $privateCertificate;
-	protected $keyFile;
-	protected $keyPassword;
+    protected $requestUrl;
+    protected $publicCertificate;
+    protected $privateCertificate;
+    protected $keyFile;
+    protected $keyPassword;
 
-	public function getRequestUrl()
-	{
-	    return $this->requestUrl;
-	}
+    public function getRequestUrl()
+    {
+        return $this->requestUrl;
+    }
 
-	public function setRequestUrl($requestUrl)
-	{
-	    $this->requestUrl = $requestUrl;
-	    return $this;
-	}
+    public function setRequestUrl($requestUrl)
+    {
+        $this->requestUrl = $requestUrl;
+        return $this;
+    }
 
-	public function getPublicCertificate()
-	{
-	    return $this->publicCertificate;
-	}
+    public function getPublicCertificate()
+    {
+        return $this->publicCertificate;
+    }
 
-	public function setPublicCertificate($publicCertificate)
-	{
-	    $this->publicCertificate = $publicCertificate;
-	    return $this;
-	}
+    public function setPublicCertificate($publicCertificate)
+    {
+        $this->publicCertificate = $publicCertificate;
+        return $this;
+    }
 
-	public function getPrivateCertificate()
-	{
-	    return $this->privateCertificate;
-	}
+    public function getPrivateCertificate()
+    {
+        return $this->privateCertificate;
+    }
 
-	public function setPrivateCertificate($privateCertificate)
-	{
-	    $this->privateCertificate = $privateCertificate;
-	    return $this;
-	}
+    public function setPrivateCertificate($privateCertificate)
+    {
+        $this->privateCertificate = $privateCertificate;
+        return $this;
+    }
 
-	public function getKeyFile()
-	{
-	    return $this->keyFile;
-	}
+    public function getKeyFile()
+    {
+        return $this->keyFile;
+    }
 
-	public function setKeyFile($keyFile)
-	{
-	    $this->keyFile = $keyFile;
-	    return $this;
-	}
+    public function setKeyFile($keyFile)
+    {
+        $this->keyFile = $keyFile;
+        return $this;
+    }
 
-	public function getKeyPassword()
-	{
-	    return $this->keyPassword;
-	}
+    public function getKeyPassword()
+    {
+        return $this->keyPassword;
+    }
 
-	public function setKeyPassword($keyPassword)
-	{
-	    $this->keyPassword = $keyPassword;
-	    return $this;
-	}
+    public function setKeyPassword($keyPassword)
+    {
+        $this->keyPassword = $keyPassword;
+        return $this;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function sendDirectoryRequest(DirectoryRequest $request)
-	{
-		$message  = $this->createMessage($request, array(
-			$request->getMerchantId(),
-			$request->getSubId()
-		));
-		$response = $this->send($message);
+    /**
+     * {@inheritdoc}
+     */
+    public function sendDirectoryRequest(DirectoryRequest $request)
+    {
+        $message  = $this->createMessage($request, array(
+            $request->getMerchantId(),
+            $request->getSubId()
+        ));
+        $response = $this->send($message);
 
-		var_dump($response);
+        var_dump($response);
 
-		$response = new DirectoryResponse;
+        $response = new DirectoryResponse;
 
-		return $response;
-	}
+        return $response;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function sendTransactionRequest(TransactionRequest $request)
-	{
-		$message  = $this->createMessage($request, array(
-			$request->getIssuer()->getId(),
+    /**
+     * {@inheritdoc}
+     */
+    public function sendTransactionRequest(TransactionRequest $request)
+    {
+        $message  = $this->createMessage($request, array(
+            $request->getIssuer()->getId(),
             $request->getMerchantId(),
             $request->getSubId(),
             $request->getReturnUrl(),
@@ -152,67 +152,67 @@ class StandardClient implements ClientInterface
             $request->getTransaction()->getLanguage(),
             $request->getTransaction()->getDescription(),
             $request->getTransaction()->getEntranceCode()
-		));
+        ));
 
-		$message->Merchant->addChild('merchantReturnURL', $request->getReturnUrl());
+        $message->Merchant->addChild('merchantReturnURL', $request->getReturnUrl());
 
         $issuer = $message->addChild('Issuer');
         $issuer->addChild('issuerID', $request->getIssuer()->getId());
 
         $transaction = $message->addChild('Transaction');
-		$transaction->addChild('purchaseID',       $request->getTransaction()->getPurchaseId());
-		$transaction->addChild('amount',           $request->getTransaction()->getAmount());
-		$transaction->addChild('currency',         $request->getTransaction()->getCurrency());
-		$transaction->addChild('expirationPeriod', $request->getTransaction()->getExperiationPeriod());
-		$transaction->addChild('language',         $request->getTransaction()->getLanguage());
-		$transaction->addChild('description',      $request->getTransaction()->getDescription());
-		$transaction->addChild('entranceCode',     $request->getTransaction()->getEntranceCode());
+        $transaction->addChild('purchaseID',       $request->getTransaction()->getPurchaseId());
+        $transaction->addChild('amount',           $request->getTransaction()->getAmount());
+        $transaction->addChild('currency',         $request->getTransaction()->getCurrency());
+        $transaction->addChild('expirationPeriod', $request->getTransaction()->getExperiationPeriod());
+        $transaction->addChild('language',         $request->getTransaction()->getLanguage());
+        $transaction->addChild('description',      $request->getTransaction()->getDescription());
+        $transaction->addChild('entranceCode',     $request->getTransaction()->getEntranceCode());
 
-		$response = $this->send($message);
-		$response = new TransactionResponse;
+        $response = $this->send($message);
+        $response = new TransactionResponse;
 
-		return $response;
-	}
+        return $response;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function sendStatusRequest(StatusRequest $request)
-	{
-		$message  = $this->createMessage($request, array(
+    /**
+     * {@inheritdoc}
+     */
+    public function sendStatusRequest(StatusRequest $request)
+    {
+        $message  = $this->createMessage($request, array(
             $request->getMerchantId(),
             $request->getSubId(),
             $request->getTransaction()->getTransactionId()
-		));
+        ));
 
-		$transaction = $message->addChild('Transaction');
+        $transaction = $message->addChild('Transaction');
         $transaction->addChild('transactionID', $request->getTransaction()->getTransactionId());
 
-		$response = $this->send($message);
-		$response = new StatusResponse;
+        $response = $this->send($message);
+        $response = new StatusResponse;
 
-		return $response;
-	}
+        return $response;
+    }
 
-	protected function createMessage(RequestInterface $request, array $signedFields = array())
-	{
-		$class = get_class($request);
-		$class = substr($class, strrpos($class, '\\') + 1);
+    protected function createMessage(RequestInterface $request, array $signedFields = array())
+    {
+        $class = get_class($request);
+        $class = substr($class, strrpos($class, '\\') + 1);
 
-		switch ($class) {
-			case 'DirectoryRequest':
-				$type = 'DirectoryReq';
-				break;
-			case 'TransactionRequest':
-				$type = 'AcquirerTrxReq';
-				break;
-			case 'StatusRequest':
-				$type = 'AcquirerStatusReq';
-				break;
-		}
+        switch ($class) {
+            case 'DirectoryRequest':
+                $type = 'DirectoryReq';
+                break;
+            case 'TransactionRequest':
+                $type = 'AcquirerTrxReq';
+                break;
+            case 'StatusRequest':
+                $type = 'AcquirerStatusReq';
+                break;
+        }
 
-		// Start to create message
-		$xml = new SimpleXMLElement(sprintf('<?xml version="1.0" encoding="UTF-8"?><%1$s></%1$s>', $type));
+        // Start to create message
+        $xml = new SimpleXMLElement(sprintf('<?xml version="1.0" encoding="UTF-8"?><%1$s></%1$s>', $type));
         $xml->addAttribute('xmlns', 'http://www.idealdesk.com/Message');
         $xml->addAttribute('version', '1.1.0');
 
@@ -234,16 +234,16 @@ class StandardClient implements ClientInterface
         $merchant->addChild('tokenCode', $signature);
 
         return $xml;
-	}
+    }
 
-	protected function getFingerprint($public = false)
-	{
-		$certificate = ($public) ? $this->getPublicCertificate() : $this->getPrivateCertificate();
+    protected function getFingerprint($public = false)
+    {
+        $certificate = ($public) ? $this->getPublicCertificate() : $this->getPrivateCertificate();
 
         if (false === ($fp = fopen($certificate, 'r'))) {
             throw new Exception\CertificateNotFoundException(
-            	'Cannot find the certificate at %s', $certificate
-        	);
+                'Cannot find the certificate at %s', $certificate
+            );
         }
 
         $rawData = fread($fp, 8192);
@@ -252,30 +252,30 @@ class StandardClient implements ClientInterface
 
         if (!openssl_x509_export($data, $data)) {
             throw new Exception\CertificateNotValidException(
-            	'Certificate %s cannot be read due to errors in the file', $certificate
-        	);
+                'Certificate %s cannot be read due to errors in the file', $certificate
+            );
         }
 
         $data = str_replace(array('-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----'), '', $data);
         return strtoupper(sha1(base64_decode($data)));
-	}
+    }
 
-	protected function getMessageSignature($timestamp, array $signedFields)
-	{
-		$message = $timestamp;
+    protected function getMessageSignature($timestamp, array $signedFields)
+    {
+        $message = $timestamp;
         foreach ($signedFields as $value) {
             $message .= $value;
         }
 
         $message = str_replace(array(" ", "\t", "\n"), array('', '', ''), $message);
-		$keyFile = $this->getKeyFile();
-		$keyPwd  = $this->getKeyPassword();
+        $keyFile = $this->getKeyFile();
+        $keyPwd  = $this->getKeyPassword();
 
 
-		if(false === ($fp = fopen($this->keyFile, 'r'))) {
+        if(false === ($fp = fopen($this->keyFile, 'r'))) {
             throw new Exception\CertificateNotFoundException(
-            	'Cannot find the keyfile at %s', $certificate
-        	);
+                'Cannot find the keyfile at %s', $certificate
+            );
         }
 
         $keyFile = fread($fp, 8192);
@@ -283,27 +283,27 @@ class StandardClient implements ClientInterface
 
         if (!$privateKey = openssl_pkey_get_private($keyFile, $keyPwd)) {
             throw new Exception\CertificateNotValidException(
-            	'Certificate %s cannot be opened with the provided password', $certificate
-        	);
+                'Certificate %s cannot be opened with the provided password', $certificate
+            );
         }
 
         $signature = '';
         if (!openssl_sign($message, $signature, $privateKey)) {
             throw new Exception\CertificateNotValidException(
-            	'Message cannot be signed with certificate %s due to errors in the file', $certificate
-        	);
+                'Message cannot be signed with certificate %s due to errors in the file', $certificate
+            );
         }
 
         openssl_free_key($privateKey);
         return base64_encode($signature);
-	}
+    }
 
-	protected function send(SimpleXMLElement $xml)
-	{
-		$data = $xml->asXml();
-		$ch   = curl_init($this->getRequestUrl());
+    protected function send(SimpleXMLElement $xml)
+    {
+        $data = $xml->asXml();
+        $ch   = curl_init($this->getRequestUrl());
 
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
@@ -312,5 +312,5 @@ class StandardClient implements ClientInterface
         curl_setopt($ch, CURLOPT_SSLVERSION, 3);
 
         return curl_exec($ch);
-	}
+    }
 }
