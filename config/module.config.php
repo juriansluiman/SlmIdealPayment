@@ -54,29 +54,40 @@ return array(
 		'abn' => array(
 			'test' => '',
 			'live' => '',
-			'certificate' => __DIR__ '/../data/abn.cer',
+			'certificate' => __DIR__ . '/../data/abn.cer',
 		),
 		'ing' => array(
 			'test' => 'https://idealtest.secure-ing.com/ideal/iDeal',
 			'live' => 'https://ideal.secure-ing.com/ideal/iDeal',
-			'certificate' => __DIR__ '/../data/ing.cer',
+			'certificate' => __DIR__ . '/../data/ing.cer',
 		),
 		'rabo' => array(
 			'test' => 'https://ideal.rabobank.nl/ideal/iDeal',
 			'live' => 'https://idealtest.rabobank.nl/ideal/iDeal',
-			'certificate' => __DIR__ '/../data/rabo.cer',
+			'certificate' => __DIR__ . '/../data/rabo.cer',
 		),
 	),
 
 	'service_manager' => array(
 		'factories' => array(
-			'ideal-abn' => function($sm) {
-				$config = $sm->get('config')->ideal;
-
-				$url  = ($config->production) ? $config->abn->live ; $config->abn->test;
-				$cert = $config->abn->certificate;
+			'SlmIdealPayment\Client\StandardClient' => function($sm) {
+				$config = $sm->get('config');
+				$config = $config['ideal'];
 
 				$client = new StandardClient;
+				$client->setPrivateCertificate($config['certificate']);
+				$client->setKeyFile($config['key_file']);
+				$client->setKeyPassword($config['key_password']);
+
+				return $client;
+			},
+			'ideal-abn' => function($sm) {
+				$config = $sm->get('config')->ideal;
+				$client = $sm->get('SlmIdealPayment\Client\StandardClient');
+
+				$url  = ($config->production) ? $config->abn->live : $config->abn->test;
+				$cert = $config->abn->certificate;
+
 				$client->setRequestUrl($url);
 				$client->setPublicCertificate($cert);
 
@@ -84,23 +95,24 @@ return array(
 			},
 			'ideal-ing' => function($sm) {
 				$config = $sm->get('config')->ideal;
+				$client = $sm->get('SlmIdealPayment\Client\StandardClient');
 
-				$url  = ($config->production) ? $config->ing->live ; $config->ing->test;
+				$url  = ($config->production) ? $config->ing->live : $config->ing->test;
 				$cert = $config->ing->certificate;
 
-				$client = new StandardClient;
 				$client->setRequestUrl($url);
 				$client->setPublicCertificate($cert);
 
 				return $client;
 			},
 			'ideal-rabo' => function($sm) {
-				$config = $sm->get('config')->ideal;
+				$config = $sm->get('config');
+				$config = $config['ideal'];
+				$client = $sm->get('SlmIdealPayment\Client\StandardClient');
 
-				$url  = ($config->production) ? $config->rabo->live ; $config->rabo->test;
-				$cert = $config->rabo->certificate;
+				$url  = ($config['production']) ? $config['rabo']['live'] : $config['rabo']['test'];
+				$cert = $config['rabo']['certificate'];
 
-				$client = new StandardClient;
 				$client->setRequestUrl($url);
 				$client->setPublicCertificate($cert);
 
