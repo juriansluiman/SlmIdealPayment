@@ -44,16 +44,13 @@ namespace SlmIdealPayment\Client;
 
 use SimpleXMLElement;
 use DateTime;
-use SlmIdealPayment\Request\RequestInterface;
 
-use SlmIdealPayment\Request\DirectoryRequest;
-use SlmIdealPayment\Response\DirectoryResponse;
+use SlmIdealPayment\Request;
+use SlmIdealPayment\Response;
+use SlmIdealPayment\Model;
 
-use SlmIdealPayment\Request\TransactionRequest;
-use SlmIdealPayment\Response\TransactionResponse;
-
-use SlmIdealPayment\Request\StatusRequest;
-use SlmIdealPayment\Response\StatusResponse;
+use Zend\Http\Client   as HttpClient;
+use Zend\Http\Response as HttpResponse;
 
 class StandardClient implements ClientInterface
 {
@@ -121,17 +118,36 @@ class StandardClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function sendDirectoryRequest(DirectoryRequest $request)
+    public function sendDirectoryRequest(Request\DirectoryRequest $request)
     {
+        // Prepare request
         $message  = $this->createMessage($request, array(
             $request->getMerchantId(),
             $request->getSubId()
         ));
+
+        // Grab result and parse to XML object
         $response = $this->send($message);
+        $xml      = $this->extractResponse($response);
 
-        var_dump($response);
+        // Create response object
+        $response = new Response\DirectoryResponse;
+        $acquirer = (string) $xml->Acquirer->acquirerID;
+        $response->setAcquirer($acquirer);
 
-        $response = new DirectoryResponse;
+        $collection = new Model\IssuerCollection;
+        foreach ($xml->Directory->children() as $item) {
+            if ($item->getName() != 'Issuer') {
+                continue;
+            }
+
+            $issuer = new Model\Issuer();
+            $issuer->setId((string) $item->issuerID);
+            $issuer->setName((string) $item->issuerName);
+            $issuer->setType((string) $item->issuerList);
+            $collection->append($issuer);
+        }
+        $response->setIssuers($collection);
 
         return $response;
     }
@@ -139,8 +155,9 @@ class StandardClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function sendTransactionRequest(TransactionRequest $request)
+    public function sendTransactionRequest(Request\TransactionRequest $request)
     {
+        // Prepare request
         $message  = $this->createMessage($request, array(
             $request->getIssuer()->getId(),
             $request->getMerchantId(),
@@ -168,8 +185,12 @@ class StandardClient implements ClientInterface
         $transaction->addChild('description',      $request->getTransaction()->getDescription());
         $transaction->addChild('entranceCode',     $request->getTransaction()->getEntranceCode());
 
+        // Grab result and parse to XML object
         $response = $this->send($message);
-        $response = new TransactionResponse;
+        $xml      = $this->extractResponse($response);
+
+        // Create response object
+        $response = new Response\TransactionResponse;
 
         return $response;
     }
@@ -177,7 +198,7 @@ class StandardClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function sendStatusRequest(StatusRequest $request)
+    public function sendStatusRequest(Request\StatusRequest $request)
     {
         $message  = $this->createMessage($request, array(
             $request->getMerchantId(),
@@ -189,12 +210,12 @@ class StandardClient implements ClientInterface
         $transaction->addChild('transactionID', $request->getTransaction()->getTransactionId());
 
         $response = $this->send($message);
-        $response = new StatusResponse;
+        $response = new Response\StatusResponse;
 
         return $response;
     }
 
-    protected function createMessage(RequestInterface $request, array $signedFields = array())
+    protected function createMessage(Request\RequestInterface $request, array $signedFields = array())
     {
         $class = get_class($request);
         $class = substr($class, strrpos($class, '\\') + 1);
@@ -300,17 +321,22 @@ class StandardClient implements ClientInterface
 
     protected function send(SimpleXMLElement $xml)
     {
-        $data = $xml->asXml();
-        $ch   = curl_init($this->getRequestUrl());
+        $data   = $xml->asXml();
 
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_SSLVERSION, 3);
+        $client = new HttpClient($this->getRequestUrl());
+        $client->setRawBody($data);
+        return $client->send();
+    }
 
-        return curl_exec($ch);
+    protected function extractResponse(HttpResponse $response)
+    {
+        if (!$response->isOk()) {
+            throw new Exception\HttpRequestException(
+                'Request is not successfully executed'
+            );
+        }
+
+        $body = $response->getBody();
+        return simplexml_load_string($body);
     }
 }

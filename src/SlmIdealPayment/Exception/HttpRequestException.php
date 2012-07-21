@@ -33,27 +33,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package     SlmIdealPayment
- * @subpackage  Response
+ * @subpackage  Exception
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIdealPayment\Response;
+namespace SlmIdealPayment\Exception;
 
-abstract class AbstractResponse
+class HttpRequestException extends \RuntimeException
 {
-    protected $acquirer;
-
-    public function getAcquirer()
-    {
-        return $this->acquirer;
-    }
-
-    public function setAcquirer($acquirer)
-    {
-        $this->acquirer = $acquirer;
-        return $this;
-    }
 }
