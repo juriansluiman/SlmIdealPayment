@@ -52,6 +52,8 @@ use SlmIdealPayment\Model;
 use Zend\Http\Client   as HttpClient;
 use Zend\Http\Response as HttpResponse;
 
+use SlmIdealPayment\Exception;
+
 class StandardClient implements ClientInterface
 {
     protected $requestUrl;
@@ -337,6 +339,15 @@ class StandardClient implements ClientInterface
         }
 
         $body = $response->getBody();
-        return simplexml_load_string($body);
+        $xml  = simplexml_load_string($body);
+
+        if (isset($xml->Error)) {
+            $error = $xml->Error;
+            throw new Exception\IdealRequestException(
+                sprintf('%s (%s): "%s"', $error->errorMessage, $error->errorCode, $error->errorDetail)
+            );
+        }
+
+        return $xml;
     }
 }
