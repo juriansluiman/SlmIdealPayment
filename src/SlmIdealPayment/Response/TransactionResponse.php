@@ -44,7 +44,7 @@ namespace SlmIdealPayment\Response;
 
 use SlmIdealPayment\Model\Transaction;
 
-class DirectoryResponse extends AbstractResponse
+class TransactionResponse extends AbstractResponse
 {
     protected $authenticationUrl;
     protected $transaction;

@@ -182,7 +182,7 @@ class StandardClient implements ClientInterface
         $transaction->addChild('purchaseID',       $request->getTransaction()->getPurchaseId());
         $transaction->addChild('amount',           $request->getTransaction()->getAmount());
         $transaction->addChild('currency',         $request->getTransaction()->getCurrency());
-        $transaction->addChild('expirationPeriod', $request->getTransaction()->getExperiationPeriod());
+        $transaction->addChild('expirationPeriod', $request->getTransaction()->getExpirationPeriod());
         $transaction->addChild('language',         $request->getTransaction()->getLanguage());
         $transaction->addChild('description',      $request->getTransaction()->getDescription());
         $transaction->addChild('entranceCode',     $request->getTransaction()->getEntranceCode());
@@ -193,6 +193,18 @@ class StandardClient implements ClientInterface
 
         // Create response object
         $response = new Response\TransactionResponse;
+        $acquirer = (string) $xml->Acquirer->acquirerID;
+        $url      = (string) $xml->Issuer->issuerAuthenticationURL;
+        $response->setAcquirer($acquirer);
+        $response->setAuthenticationUrl($url);
+
+        $transaction   = new Model\Transaction;
+        $transactionId = (string) $xml->Transaction->transactionID;
+        $purchaseId    = (string) $xml->Transaction->purchaseID;
+        $transaction->setTransactionId($transactionId);
+        $transaction->setPurchaseId($purchaseId);
+
+        $response->setTransaction($transaction);
 
         return $response;
     }
