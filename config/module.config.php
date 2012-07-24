@@ -62,8 +62,8 @@ return array(
             'certificate' => __DIR__ . '/../data/ing.cer',
         ),
         'rabo' => array(
-            'test' => 'https://ideal.rabobank.nl/ideal/iDeal',
-            'live' => 'https://idealtest.rabobank.nl/ideal/iDeal',
+            'test' => 'https://idealtest.rabobank.nl/ideal/iDeal',
+            'live' => 'https://ideal.rabobank.nl/ideal/iDeal',
             'certificate' => __DIR__ . '/../data/rabo.cer',
         ),
     ),
