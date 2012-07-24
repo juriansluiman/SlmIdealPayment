@@ -214,6 +214,7 @@ class StandardClient implements ClientInterface
      */
     public function sendStatusRequest(Request\StatusRequest $request)
     {
+        // Prepare request
         $message  = $this->createMessage($request, array(
             $request->getMerchantId(),
             $request->getSubId(),
@@ -223,8 +224,39 @@ class StandardClient implements ClientInterface
         $transaction = $message->addChild('Transaction');
         $transaction->addChild('transactionID', $request->getTransaction()->getTransactionId());
 
+        // Grab result and parse to XML object
         $response = $this->send($message);
-        $response = new Response\StatusResponse;
+        $xml      = $this->extractResponse($response);
+
+        // Create response object
+        $response    = new Response\StatusResponse;
+        $acquirer    = (string) $xml->Acquirer->acquirerID;
+        $signature   = (string) $xml->Signature->signatureValue;
+        $fingerprint = (string) $xml->Signature->fingerprint;
+        $response->setAcquirer($acquirer);
+        $response->setSignatureValue($signature);
+        $response->setFingerprint($fingerprint);
+
+        $transaction   = new Model\Transaction;
+        $transactionId = (string) $xml->Transaction->transactionID;
+        $status        = (string) $xml->Transaction->status;
+        $transaction->setTransactionId($transactionId);
+        $transaction->setStatus($status);
+
+        $consumer = new Model\Consumer;
+        $name     = (string) $xml->Transaction->consumerName;
+        $account  = (string) $xml->Transaction->consumerAccountNumber;
+        $city     = (string) $xml->Transaction->consumerCity;
+        $consumer->setName($name);
+        $consumer->setAccountNumber($account);
+        $consumer->setCity($city);
+        $transaction->setConsumer($consumer);
+
+        $response->setTransaction($transaction);
+
+        /**
+         * @todo Check signature and fingerprint if message is valid
+         */
 
         return $response;
     }

@@ -66,7 +66,7 @@ class StatusResponse extends AbstractResponse
         return $this->signatureValue;
     }
 
-    public function setSignature($signatureValue)
+    public function setSignatureValue($signatureValue)
     {
         $this->signatureValue = $signatureValue;
         return $this;
