@@ -40,6 +40,7 @@
  */
 
 use SlmIdealPayment\Client\StandardClient;
+use Zend\Http\Client as HttpClient;
 
 return array(
     'ideal' => array(
@@ -78,6 +79,13 @@ return array(
                 $client->setPrivateCertificate($config['certificate']);
                 $client->setKeyFile($config['key_file']);
                 $client->setKeyPassword($config['key_password']);
+
+                $httpClient = new HttpClient;
+                $httpClient->setAdapter('Zend\Http\Client\Adapter\Socket');
+                $httpClient->getAdapter()->setOptions(array(
+                    'sslverifypeer' => false
+                ));
+                $client->setHttpClient($httpClient);
 
                 return $client;
             },

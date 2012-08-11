@@ -62,6 +62,8 @@ class StandardClient implements ClientInterface
     protected $keyFile;
     protected $keyPassword;
 
+    protected $httpClient;
+
     public function getRequestUrl()
     {
         return $this->requestUrl;
@@ -114,6 +116,21 @@ class StandardClient implements ClientInterface
     public function setKeyPassword($keyPassword)
     {
         $this->keyPassword = $keyPassword;
+        return $this;
+    }
+
+    public function getHttpClient()
+    {
+        if (!$this->httpClient instanceof HttpClient) {
+            $this->httpClient = new HttpClient;
+        }
+
+        return $this->httpClient;
+    }
+
+    public function setHttpClient(HttpClient $httpClient)
+    {
+        $this->httpClient = $httpClient;
         return $this;
     }
 
@@ -369,7 +386,8 @@ class StandardClient implements ClientInterface
     {
         $data   = $xml->asXml();
 
-        $client = new HttpClient($this->getRequestUrl());
+        $client = $this->getHttpClient();
+        $client->setUri($this->getRequestUrl());
         $client->setRawBody($data);
         return $client->send();
     }
