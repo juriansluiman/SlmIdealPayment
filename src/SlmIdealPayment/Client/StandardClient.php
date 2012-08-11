@@ -356,25 +356,25 @@ class StandardClient implements ClientInterface
         $keyPwd  = $this->getKeyPassword();
 
 
-        if(false === ($fp = fopen($this->keyFile, 'r'))) {
+        if(false === ($fp = @fopen($this->keyFile, 'r'))) {
             throw new Exception\CertificateNotFoundException(
-                'Cannot find the keyfile at %s', $certificate
+                sprintf('Cannot find the keyfile at %s', $keyFile)
             );
         }
 
-        $keyFile = fread($fp, 8192);
+        $key = fread($fp, 8192);
         fclose($fp);
 
-        if (!$privateKey = openssl_pkey_get_private($keyFile, $keyPwd)) {
+        if (!$privateKey = openssl_pkey_get_private($key, $keyPwd)) {
             throw new Exception\CertificateNotValidException(
-                'Certificate %s cannot be opened with the provided password', $certificate
+                sprintf('Certificate %s cannot be opened with the provided password', $keyFile)
             );
         }
 
         $signature = '';
         if (!openssl_sign($message, $signature, $privateKey)) {
             throw new Exception\CertificateNotValidException(
-                'Message cannot be signed with certificate %s due to errors in the file', $certificate
+                sprintf('Message cannot be signed with certificate %s due to errors in the file', $keyFile)
             );
         }
 
