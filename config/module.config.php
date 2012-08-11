@@ -90,11 +90,12 @@ return array(
                 return $client;
             },
             'ideal-abn' => function($sm) {
-                $config = $sm->get('config')->ideal;
+                $config = $sm->get('config');
+                $config = $config['ideal'];
                 $client = $sm->get('SlmIdealPayment\Client\StandardClient');
 
-                $url  = ($config->production) ? $config->abn->live : $config->abn->test;
-                $cert = $config->abn->certificate;
+                $url  = ($config['production']) ? $config['abn']['live'] : $config['abn']['test'];
+                $cert = $config['abn']['certificate'];
 
                 $client->setRequestUrl($url);
                 $client->setPublicCertificate($cert);
@@ -102,11 +103,12 @@ return array(
                 return $client;
             },
             'ideal-ing' => function($sm) {
-                $config = $sm->get('config')->ideal;
+                $config = $sm->get('config');
+                $config = $config['ideal'];
                 $client = $sm->get('SlmIdealPayment\Client\StandardClient');
 
-                $url  = ($config->production) ? $config->ing->live : $config->ing->test;
-                $cert = $config->ing->certificate;
+                $url  = ($config['production']) ? $config['ing']['live'] : $config['ing']['test'];
+                $cert = $config['ing']['certificate'];
 
                 $client->setRequestUrl($url);
                 $client->setPublicCertificate($cert);
