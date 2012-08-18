@@ -326,7 +326,7 @@ class StandardClient implements ClientInterface
 
         if (false === ($fp = fopen($certificate, 'r'))) {
             throw new Exception\CertificateNotFoundException(
-                'Cannot find the certificate at %s', $certificate
+                sprintf('Cannot find the certificate at %s', $certificate)
             );
         }
 
@@ -336,7 +336,7 @@ class StandardClient implements ClientInterface
 
         if (!openssl_x509_export($data, $data)) {
             throw new Exception\CertificateNotValidException(
-                'Certificate %s cannot be read due to errors in the file', $certificate
+                sprintf('Certificate %s cannot be read due to errors in the file', $certificate)
             );
         }
 
