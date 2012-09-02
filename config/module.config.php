@@ -52,7 +52,9 @@ return array(
         'key_file'     => '',
         'key_password' => '',
 
-        'capath'       => '/etc/ssl/certs',
+        'ssl_options'  => array(
+            'sslcapath' => '/etc/ssl/certs',
+        ),
 
         'abn' => array(
             'test' => '',
@@ -84,9 +86,7 @@ return array(
 
                 $httpClient = new HttpClient;
                 $httpClient->setAdapter('Zend\Http\Client\Adapter\Socket');
-                $httpClient->getAdapter()->setOptions(array(
-                    'sslcapath'=> $config['capath']
-                ));
+                $httpClient->getAdapter()->setOptions($config['ssl_options']);
                 $client->setHttpClient($httpClient);
 
                 return $client;
