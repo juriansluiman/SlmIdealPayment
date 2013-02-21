@@ -2,7 +2,7 @@
     "name": "slm/ideal-payment",
     "description": "Payment module for the Dutch iDEAL payment system",
     "type": "library",
-    "license": "new-bsd",
+    "license": "BSD-3-Clause",
     "keywords": [
         "ideal",
         "payment"
