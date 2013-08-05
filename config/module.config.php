@@ -39,7 +39,6 @@
  * @link        http://juriansluiman.nl
  */
 
-use SlmIdealPayment\Client\StandardClient;
 use Zend\Http\Client as HttpClient;
 
 return array(
@@ -47,89 +46,26 @@ return array(
         'production'   => true,
         'merchant_id'  => '',
         'sub_id'       => '',
-
         'certificate'  => '',
         'key_file'     => '',
         'key_password' => '',
-
         'ssl_options'  => array(
             'sslcapath' => '/etc/ssl/certs',
         ),
-
-        'abn' => array(
-            'test' => '',
-            'live' => '',
+        'abn'          => array(
+            'test'        => '',
+            'live'        => '',
             'certificate' => __DIR__ . '/../data/abn.cer',
         ),
-        'ing' => array(
-            'test' => 'https://idealtest.secure-ing.com/ideal/iDeal',
-            'live' => 'https://ideal.secure-ing.com/ideal/iDeal',
+        'ing'          => array(
+            'test'        => 'https://idealtest.secure-ing.com/ideal/iDeal',
+            'live'        => 'https://ideal.secure-ing.com/ideal/iDeal',
             'certificate' => __DIR__ . '/../data/ing.cer',
         ),
-        'rabo' => array(
-            'test' => 'https://idealtest.rabobank.nl/ideal/iDeal',
-            'live' => 'https://ideal.rabobank.nl/ideal/iDeal',
+        'rabo'         => array(
+            'test'        => 'https://idealtest.rabobank.nl/ideal/iDeal',
+            'live'        => 'https://ideal.rabobank.nl/ideal/iDeal',
             'certificate' => __DIR__ . '/../data/rabo.cer',
-        ),
-    ),
-
-    'service_manager' => array(
-        'factories' => array(
-            'SlmIdealPayment\Client\StandardClient' => function($sm) {
-                $config = $sm->get('config');
-                $config = $config['ideal'];
-
-                $client = new StandardClient;
-                $client->setPrivateCertificate($config['certificate']);
-                $client->setKeyFile($config['key_file']);
-                $client->setKeyPassword($config['key_password']);
-
-                $httpClient = new HttpClient;
-                $httpClient->setAdapter('Zend\Http\Client\Adapter\Socket');
-                $httpClient->getAdapter()->setOptions($config['ssl_options']);
-                $client->setHttpClient($httpClient);
-
-                return $client;
-            },
-            'ideal-abn' => function($sm) {
-                $config = $sm->get('config');
-                $config = $config['ideal'];
-                $client = $sm->get('SlmIdealPayment\Client\StandardClient');
-
-                $url  = ($config['production']) ? $config['abn']['live'] : $config['abn']['test'];
-                $cert = $config['abn']['certificate'];
-
-                $client->setRequestUrl($url);
-                $client->setPublicCertificate($cert);
-
-                return $client;
-            },
-            'ideal-ing' => function($sm) {
-                $config = $sm->get('config');
-                $config = $config['ideal'];
-                $client = $sm->get('SlmIdealPayment\Client\StandardClient');
-
-                $url  = ($config['production']) ? $config['ing']['live'] : $config['ing']['test'];
-                $cert = $config['ing']['certificate'];
-
-                $client->setRequestUrl($url);
-                $client->setPublicCertificate($cert);
-
-                return $client;
-            },
-            'ideal-rabo' => function($sm) {
-                $config = $sm->get('config');
-                $config = $config['ideal'];
-                $client = $sm->get('SlmIdealPayment\Client\StandardClient');
-
-                $url  = ($config['production']) ? $config['rabo']['live'] : $config['rabo']['test'];
-                $cert = $config['rabo']['certificate'];
-
-                $client->setRequestUrl($url);
-                $client->setPublicCertificate($cert);
-
-                return $client;
-            },
         ),
     ),
 );

@@ -45,6 +45,7 @@ use Zend\ModuleManager\Feature;
 
 class Module implements
     Feature\AutoloaderProviderInterface,
+    Feature\ServiceProviderInterface,
     Feature\ConfigProviderInterface
 {
     public function getAutoloaderConfig()
@@ -55,7 +56,7 @@ class Module implements
             ),
             'Zend\Loader\StandardAutoloader' => array(
                 'namespaces' => array(
-                    __NAMESPACE__           => __DIR__ . '/src/' . __NAMESPACE__
+                    __NAMESPACE__ => __DIR__ . '/src/' . __NAMESPACE__
                 ),
             ),
         );
@@ -64,5 +65,15 @@ class Module implements
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
+    }
+
+    /**
+     * Go to the service configuration
+     *
+     * @return array
+     */
+    public function getServiceConfig()
+    {
+        return include __DIR__ . '/config/services.config.php';
     }
 }
