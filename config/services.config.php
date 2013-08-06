@@ -41,9 +41,11 @@
 use SlmIdealPayment\Client\StandardClient;
 use Zend\Http\Client as HttpClient;
 
+include __DIR__ . '/../data/xmlseclibs.php';
+
 return array(
     'factories' => array(
-        'SlmIdealPayment\Client\StandardClient' => function($sm) {
+        'SlmIdealPayment\Client\StandardClient' => function ($sm) {
             $config = $sm->get('config');
             $config = $config['ideal'];
 
@@ -51,6 +53,8 @@ return array(
             $client->setPrivateCertificate($config['certificate']);
             $client->setKeyFile($config['key_file']);
             $client->setKeyPassword($config['key_password']);
+            $client->setMerchantId($config['merchant_id']);
+            $client->setSubId($config['sub_id']);
 
             $httpClient = new HttpClient;
             $httpClient->setAdapter('Zend\Http\Client\Adapter\Socket');
@@ -59,7 +63,7 @@ return array(
 
             return $client;
         },
-        'ideal-abn' => function($sm) {
+        'ideal-abn'                             => function ($sm) {
             $config = $sm->get('config');
             $config = $config['ideal'];
             $client = $sm->get('SlmIdealPayment\Client\StandardClient');
@@ -72,7 +76,7 @@ return array(
 
             return $client;
         },
-        'ideal-ing' => function($sm) {
+        'ideal-ing'                             => function ($sm) {
             $config = $sm->get('config');
             $config = $config['ideal'];
             $client = $sm->get('SlmIdealPayment\Client\StandardClient');
@@ -85,7 +89,7 @@ return array(
 
             return $client;
         },
-        'ideal-rabo' => function($sm) {
+        'ideal-rabo'                            => function ($sm) {
             $config = $sm->get('config');
             $config = $config['ideal'];
             $client = $sm->get('SlmIdealPayment\Client\StandardClient');
