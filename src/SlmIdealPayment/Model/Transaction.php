@@ -59,6 +59,9 @@ class Transaction
     protected $transactionId;
 
     protected $status = self::STATUS_UNKNOWN;
+    /**
+     * @var Consumer;
+     */
     protected $consumer;
 
     protected $language = 'nl';
@@ -137,10 +140,19 @@ class Transaction
 
     public function setStatus($status)
     {
-        if (!in_array($status, array(
-            self::STATUS_UNKNOWN, self::STATUS_OPEN, self::STATUS_SUCCESS, self::STATUS_FAILURE, self::STATUS_CANCELLED, self::STATUS_EXPIRED
-        ))) {
-            throw new Exception\InvalidArgumentException(
+        if (!in_array(
+            $status,
+            array(
+                self::STATUS_UNKNOWN,
+                self::STATUS_OPEN,
+                self::STATUS_SUCCESS,
+                self::STATUS_FAILURE,
+                self::STATUS_CANCELLED,
+                self::STATUS_EXPIRED
+            )
+        )
+        ) {
+            throw new Exception(
                 'Cannot set status, "%s" is an invalid status', $status
             );
         }
@@ -149,10 +161,14 @@ class Transaction
         return $this;
     }
 
+    /**
+     * @return Consumer
+     * @throws RuntimeException
+     */
     public function getConsumer()
     {
         if (self::STATUS_UNKNOWN === $this->getStatus()) {
-            throw new Exception\RuntimeException(
+            throw new RuntimeException(
                 'Cannot get consumer, status of transaction is unkown'
             );
         }

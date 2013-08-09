@@ -44,7 +44,7 @@ namespace SlmIdealPayment\Client;
 
 use SimpleXMLElement;
 use DOMDocument;
-use DateTime;
+
 use RunTimeException;
 
 use SlmIdealPayment\Request;
@@ -53,11 +53,15 @@ use SlmIdealPayment\Model;
 
 use Zend\Http\Client as HttpClient;
 use Zend\Http\Response as HttpResponse;
+use Zend\Math\Rand;
 
 use SlmIdealPayment\Exception;
 
 class StandardClient
 {
+    /**
+     * @var string
+     */
     protected $requestUrl;
     protected $merchantId;
     protected $subId;
@@ -198,33 +202,28 @@ class StandardClient
      * to request for a url. The url will be used to send the user to, to
      * perform the actual transaction.
      *
-     * @param        $order       Order for which transaction is requested
-     * @param string $issuerId    Issuer to which transaction is requested
-     * @param string $returnUrl   Location to return client after payment
-     * @param string $language    Language of the interface (nl|en is accepted)
-     * @param string $description Description to be shown in interface (maxlength 32 characters)
-     * @return string
+     * @param Request\TransactionRequest $transactionRequest
+     * @return array
      */
-    public function requestTransaction($order, $issuerId, $returnUrl, $language, $description)
+    public function requestTransaction(Request\TransactionRequest $transactionRequest)
     {
-        return true;
         $xml = $this->_createXmlForRequestTransaction(
             array(
-                'issuerId'    => $issuerId,
-                'merchantId'  => $this->_merchantId,
-                'subId'       => $this->_subId,
-                'returnUrl'   => $returnUrl,
-                'purchaseId'  => $order->id,
-                'amount'      => round($order->amount / 100, 2),
+                'issuerId'    => $transactionRequest->getIssuer()->getId(),
+                'merchantId'  => $this->getMerchantId(),
+                'subId'       => $this->getSubId(),
+                'returnUrl'   => $transactionRequest->getReturnUrl(),
+                'purchaseId'  => $transactionRequest->getTransaction()->getPurchaseId(),
+                'amount'      => round($transactionRequest->getTransaction()->getAmount() / 100, 2),
                 'expiration'  => self::EXPIRATION,
                 'currency'    => self::CURRENCY,
-                'language'    => $language,
-                'description' => $description,
-                'entrance'    => $this->getEntranceCode($order)
+                'language'    => $transactionRequest->getTransaction()->getLanguage(),
+                'description' => $transactionRequest->getTransaction()->getDescription(),
+                'entrance'    => $transactionRequest->getTransaction()->getEntranceCode()
             )
         );
 
-        $response = $this->_postMessageXml($xml);
+        $response = $this->_postMessageXml($xml->saveXML());
 
         $authenticationUrl = '';
         $transactionId     = '';
@@ -247,11 +246,14 @@ class StandardClient
             }
         }
 
-        return array(
-            'authenticationUrl' => $authenticationUrl,
-            'transactionId'     => $transactionId,
-            'purchaseId'        => $purchaseId
-        );
+        $response = new Response\TransactionResponse();
+        $response->setAuthenticationUrl($authenticationUrl);
+        $transaction = new Model\Transaction();
+        $transaction->setTransactionId($transactionId);
+        $transaction->setPurchaseId($purchaseId);
+        $response->setTransaction($transaction);
+
+        return $response;
     }
 
     /**
@@ -264,20 +266,20 @@ class StandardClient
      * In case of a failed transaction, false will be returned. In case of a
      * succeeded transaction, true will be returned.
      *
-     * @param string $transactionId
-     * @return bool
+     * @param Request\StatusRequest $statusRequest
+     * @return array
      */
-    public function requestStatus($transactionId)
+    public function requestStatus(Request\StatusRequest $statusRequest)
     {
         $xml = $this->_createXmlForRequestStatus(
             array(
-                'merchantId'    => $this->_merchantId,
-                'subId'         => $this->_subId,
-                'transactionId' => $transactionId
+                'merchantId'    => $this->getMerchantId(),
+                'subId'         => $this->getSubId(),
+                'transactionId' => $statusRequest->getTransaction()->getTransactionId()
             )
         );
 
-        $response = $this->_postMessageXml($xml);
+        $response = $this->_postMessageXml($xml->saveXML());
 
         $transaction = array();
         foreach ($response->children() as $child) {
@@ -288,11 +290,29 @@ class StandardClient
             }
         }
 
-        return array(
-            'transaction' => $transaction,
-        );
+        $transactionModel = new Model\Transaction();
+        $transactionModel->setTransactionId($transaction['transactionID']);
+        $transactionModel->setStatus($transaction['status']);
+
+        $consumer = new Model\Consumer();
+        $consumer->setName($transaction['consumerName']);
+        $consumer->setAccountIBAN($transaction['consumerIBAN']);
+        $consumer->setAccountBIC($transaction['consumerBIC']);
+
+        $transactionModel->setAmount($transaction['amount']);
+        $transactionModel->setCurrency($transaction['currency']);
+        $transactionModel->setConsumer($consumer);
+
+        $transactionResponse = new Response\TransactionResponse();
+        $transactionResponse->setTransaction($transactionModel);
+
+        return $transactionResponse;
     }
 
+    /**
+     * @return Model\Issuer[]
+     * @throws \RuntimeException
+     */
     protected function _requestIssuers()
     {
         $xml = $this->createXmlForRequestIssuers(
@@ -302,17 +322,16 @@ class StandardClient
             )
         );
 
+
         $response = $this->_postMessageXml($xml->saveXML());
 
-        $xml = new \DOMDocument();
-        $xml->loadXML($response);
 
-//        if ('DirectoryRes' !== $xml->getName()) {
-//            throw new \RuntimeException('iDeal error: expects DirectoryRes as root element');
-//        }
+        if ('DirectoryRes' !== $response->getName()) {
+            throw new \RuntimeException('iDeal error: expects DirectoryRes as root element');
+        }
 
         $countries = array();
-        foreach ($xml->Directory->children() as $child) {
+        foreach ($response->Directory->children() as $child) {
             if ('Country' !== $child->getName()) {
                 continue;
             }
@@ -325,14 +344,16 @@ class StandardClient
                     continue;
                 }
 
-                $id   = (string)$issuer->issuerID;
-                $name = (string)$issuer->issuerName;
+                $issuerModel = new Model\Issuer();
+                $issuerModel->setId((string)$issuer->issuerID);
+                $issuerModel->setName((string)$issuer->issuerName);
 
-                $list[$id] = $name;
+                $list[] = $issuerModel;
             }
 
             $countries[$country] = $list;
         }
+
 
         return $countries;
     }
@@ -345,9 +366,15 @@ class StandardClient
         return $this->_parseResponse($response);
     }
 
+    /**
+     * @param $xml
+     * @return SimpleXMLElement
+     * @throws \Exception
+     */
     protected function _postMessageXml($xml)
     {
         $ch = curl_init();
+
         curl_setopt($ch, CURLOPT_URL, $this->getRequestUrl());
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
@@ -359,7 +386,19 @@ class StandardClient
         $output = curl_exec($ch);
         curl_close($ch);
 
-        return $output;
+        $prev = libxml_use_internal_errors(true);
+
+        $xml = simplexml_load_string($output);
+        if ($xml === false) {
+            $errors = "";
+            foreach (libxml_get_errors() as $error) {
+                $errors .= sprintf("%s\n", $error->message);
+            }
+            throw new \Exception(sprintf("The response packet could not be successfully parsed: %s", $errors));
+        }
+        libxml_use_internal_errors($prev);
+
+        return $xml;
     }
 
     protected function _parseResponse($response)
@@ -430,8 +469,7 @@ class StandardClient
 
     public function getEntranceCode(Deal_Model_Order $order)
     {
-        $filter = new Zend_Filter_Alnum;
-        return $filter->filter($order->id . $order->created_at);
+        return Rand::getString(40, implode(array_merge(range('a', 'z'), range('A', 'Z'), range(1, 9))));
     }
 
     protected function sign(DOMDocument $document)
@@ -461,25 +499,25 @@ class StandardClient
         $document = new DOMDocument();
         $document->loadXML($response);
 
-        $objXMLSecDSig = new XMLSecurityDSig();
+        $objXMLSecDSig = new \XMLSecurityDSig();
         $objDSig       = $objXMLSecDSig->locateSignature($document);
 
         if (!$objDSig) {
-            throw new Exception("Cannot locate Signature Node");
+            throw new \Exception("Cannot locate Signature Node");
         }
         $objXMLSecDSig->canonicalizeSignedInfo();
         $retVal = $objXMLSecDSig->validateReference();
 
         if (!$retVal) {
-            throw new Exception("Reference Validation Failed");
+            throw new \Exception("Reference Validation Failed");
         }
 
         $objKey = $objXMLSecDSig->locateKey();
         if (!$objKey) {
-            throw new Exception("We have no idea about the key");
+            throw new \Exception("We have no idea about the key");
         }
 
-        $objKey->loadKey($this->_publicCertificate, true);
+        $objKey->loadKey($this->getPublicCertificate(), true);
 
         if ($objXMLSecDSig->verify($objKey)) {
             return true;
@@ -511,7 +549,6 @@ class StandardClient
 EOT;
         $document = new \DOMDocument();
         $document->loadXML($xml);
-
         // Sign document and return
         return $this->sign($document);
     }
@@ -519,7 +556,8 @@ EOT;
     protected function _createXmlForRequestTransaction(array $data)
     {
         $timestamp = utf8_encode(gmdate('Y-m-d\TH:i:s.000\Z'));
-        $issuer    = $data['issuerId'];
+
+        $issuer = $data['issuerId'];
 
         $merchant  = $data['merchantId'];
         $subid     = $data['subId'];
@@ -533,7 +571,7 @@ EOT;
         $description = $data['description'];
         $entrance    = $data['entrance'];
 
-        $xml = <<<EOT
+        $xml      = <<<EOT
 <?xml version="1.0" encoding="UTF-8"?>
 <AcquirerTrxReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">
   <createDateTimestamp>$timestamp</createDateTimestamp>
@@ -556,11 +594,9 @@ EOT;
   </Transaction>
 </AcquirerTrxReq>
 EOT;
-
         $document = new DOMDocument();
         $document->loadXML($xml);
 
-        // Sign document and return
         return $this->sign($document);
     }
 

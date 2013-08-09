@@ -46,25 +46,45 @@ use SlmIdealPayment\Model\Transaction;
 
 class TransactionResponse extends AbstractResponse
 {
+    /**
+     * @var string
+     */
     protected $authenticationUrl;
+    /**
+     * @var Transaction
+     */
     protected $transaction;
 
+    /**
+     * @return string
+     */
     public function getAuthenticationUrl()
     {
         return $this->authenticationUrl;
     }
 
+    /**
+     * @param $authenticationUrl
+     * @return TransactionResponse
+     */
     public function setAuthenticationUrl($authenticationUrl)
     {
         $this->authenticationUrl = $authenticationUrl;
         return $this;
     }
 
+    /**
+     * @return Transaction
+     */
     public function getTransaction()
     {
         return $this->transaction;
     }
 
+    /**
+     * @param Transaction $transaction
+     * @return TransactionResponse
+     */
     public function setTransaction(Transaction $transaction)
     {
         $this->transaction = $transaction;

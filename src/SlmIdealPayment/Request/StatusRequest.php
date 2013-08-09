@@ -46,13 +46,23 @@ use SlmIdealPayment\Model\Transaction;
 
 class StatusRequest extends AbstractRequest
 {
+    /**
+     * @var Transaction
+     */
     protected $transaction;
 
+    /**
+     * @return Transaction
+     */
     public function getTransaction()
     {
         return $this->transaction;
     }
 
+    /**
+     * @param Transaction $transaction
+     * @return Transaction
+     */
     public function setTransaction(Transaction $transaction)
     {
         $this->transaction = $transaction;
