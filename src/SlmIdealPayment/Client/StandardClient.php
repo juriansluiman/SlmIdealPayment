@@ -48,6 +48,7 @@ use DOMNode;
 use SlmIdealPayment\Request;
 use SlmIdealPayment\Response;
 use SlmIdealPayment\Model;
+use SlmIdealPayment\Client\StandardClient\Signature;
 
 use Zend\Http\Client as HttpClient;
 use Zend\Http\Response as HttpResponse;
@@ -303,12 +304,13 @@ class StandardClient implements ClientInterface
         }
 
         $body = $response->getBody();
-        if (!$this->isValid($body)) {
-            throw new Exception\IdealRequestException('iDEAL response is invalid');
-        }
 
         $document = new DOMDocument;
         $document->loadXML($body);
+
+        if (!$this->isValid($document)) {
+            throw new Exception\IdealRequestException('iDEAL response is invalid');
+        }
 
         $errors = $document->getElementsByTagName('Error');
         if ($errors->length !== 0) {
@@ -348,55 +350,14 @@ class StandardClient implements ClientInterface
 
     protected function sign(DOMDocument $document)
     {
-        $objDSig = new \XMLSecurityDSig();
-        $objDSig->setCanonicalMethod(\XMLSecurityDSig::EXC_C14N);
-        $objDSig->addReference(
-            $document,
-            \XMLSecurityDSig::SHA256,
-            array('http://www.w3.org/2000/09/xmldsig#enveloped-signature'),
-            array('force_uri' => true)
-        );
-
-        $objKey             = new \XMLSecurityKey(\XMLSecurityKey::RSA_SHA256, array('type' => 'private'));
-        $objKey->passphrase = $this->getKeyPassword();
-        $objKey->loadKey($this->getKeyFile(), true);
-        $objDSig->sign($objKey);
-
-        $objDSig->addKeyInfoAndName($this->getFingerprint());
-        $objDSig->appendSignature($document->documentElement);
-
-        return $document;
+        $signature = new Signature;
+        $signature->sign($document, $this->getFingerprint(), $this->getKeyFile(), $this->getKeyPassword());
     }
 
-    protected function isValid($response)
+    protected function isValid(DOMDocument $document)
     {
-        $document = new DOMDocument();
-        $document->loadXML($response);
-
-        $objXMLSecDSig = new \XMLSecurityDSig();
-        $objDSig       = $objXMLSecDSig->locateSignature($document);
-
-        if (!$objDSig) {
-            throw new \Exception("Cannot locate Signature Node");
-        }
-        $objXMLSecDSig->canonicalizeSignedInfo();
-        $retVal = $objXMLSecDSig->validateReference();
-
-        if (!$retVal) {
-            throw new \Exception("Reference Validation Failed");
-        }
-
-        $objKey = $objXMLSecDSig->locateKey();
-        if (!$objKey) {
-            throw new \Exception("We have no idea about the key");
-        }
-
-        $objKey->loadKey($this->getPublicCertificate(), true);
-
-        if ($objXMLSecDSig->verify($objKey)) {
-            return true;
-        }
-        return false;
+        $signature = new Signature;
+        return $signature->verify($document, $this->getPublicCertificate());
     }
 
     protected function getTag(DOMNode $element, $tag)
@@ -429,7 +390,8 @@ EOT;
         $document = new DOMDocument();
         $document->loadXML($xml);
 
-        return $this->sign($document);
+        $this->sign($document);
+        return $document;
     }
 
     protected function _createXmlForRequestTransaction(array $data)
@@ -476,7 +438,8 @@ EOT;
         $document = new DOMDocument();
         $document->loadXML($xml);
 
-        return $this->sign($document);
+        $this->sign($document);
+        return $document;
     }
 
     protected function _createXmlForRequestStatus(array $data)
@@ -505,7 +468,7 @@ EOT;
         $document = new DOMDocument();
         $document->loadXML($xml);
 
-        // Sign document and return
-        return $this->sign($document);
+        $this->sign($document);
+        return $document;
     }
 }

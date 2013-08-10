@@ -38,10 +38,9 @@
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://japaveh.nl
  */
+
 use SlmIdealPayment\Client\StandardClient;
 use Zend\Http\Client as HttpClient;
-
-include __DIR__ . '/../data/xmlseclibs.php';
 
 return array(
     'factories' => array(
