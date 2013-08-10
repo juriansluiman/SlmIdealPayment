@@ -98,8 +98,12 @@ $client = $sl->get('SlmIdealPayment\Client\Standard\Rabobank');
 $request  = new DirectoryRequest;
 $response = $client->send($request);
 
-foreach ($response as $issuer) {
-    echo sprintf("%s: %s\n", $issuer->getId(), $issuer->getName());
+foreach ($response->getContries() as $country) {
+    echo sprintf("Country: %s\n", $country->getName());
+
+    foreach ($country->getIssuers as $issuer) {
+        echo sprintf("%s: %s\n", $issuer->getId(), $issuer->getName());
+    }
 }
 ```
 
@@ -114,7 +118,7 @@ $client = $sl->get('SlmIdealPayment\Client\Standard\Rabobank');
 
 // Set up the issuer
 $issuer = new Model\Issuer;
-$issuer->setId($issuer); // set selected issuer here
+$issuer->setId($issuerId); // set selected issuer here
 
 // Set up the transaction
 $transaction = new Model\Transaction;
