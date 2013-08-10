@@ -128,6 +128,28 @@ class StandardClient implements ClientInterface
         return $this;
     }
 
+    /**
+     * Getter for validation schema
+     *
+     * @return mixed
+     */
+    public function getValidationSchema()
+    {
+        return $this->validationSchema;
+    }
+
+    /**
+     * Setter for validation schema
+     *
+     * @param mixed $validationSchema Value to set
+     * @return self
+     */
+    public function setValidationSchema($validationSchema)
+    {
+        $this->validationSchema = $validationSchema;
+        return $this;
+    }
+
     public function getHttpClient()
     {
         if (!$this->httpClient instanceof HttpClient) {
@@ -391,6 +413,11 @@ EOT;
         $document->loadXML($xml);
 
         $this->sign($document);
+
+        if (!$document->schemaValidate($this->getValidationSchema())) {
+            throw new Exception\XmlValidationException('Generated XML for directory request could not be validated');
+        }
+
         return $document;
     }
 
@@ -439,6 +466,11 @@ EOT;
         $document->loadXML($xml);
 
         $this->sign($document);
+
+        if (!$document->schemaValidate($this->getValidationSchema())) {
+            throw new Exception\XmlValidationException('Generated XML for transaction request could not be validated');
+        }
+
         return $document;
     }
 
@@ -469,6 +501,11 @@ EOT;
         $document->loadXML($xml);
 
         $this->sign($document);
+
+        if (!$document->schemaValidate($this->getValidationSchema())) {
+            throw new Exception\XmlValidationException('Generated XML for status request could not be validated');
+        }
+
         return $document;
     }
 }

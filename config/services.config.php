@@ -55,6 +55,8 @@ return array(
             $client->setMerchantId($config['merchant_id']);
             $client->setSubId($config['sub_id']);
 
+            $client->setValidationSchema(__DIR__ . '/../data/AcceptantAcquirer.xsd');
+
             $httpClient = new HttpClient;
             $httpClient->setAdapter('Zend\Http\Client\Adapter\Socket');
             $httpClient->getAdapter()->setOptions($config['ssl_options']);
