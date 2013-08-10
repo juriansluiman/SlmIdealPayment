@@ -57,7 +57,7 @@ use Zend\Math\Rand;
 
 use SlmIdealPayment\Exception;
 
-class StandardClient
+class StandardClient implements ClientInterface
 {
     /**
      * @var string
@@ -189,7 +189,7 @@ class StandardClient
      *
      * @return array
      */
-    public function sendDirectoryRequest()
+    public function sendDirectoryRequest(Request\DirectoryRequest $directoryRequest)
     {
         $list = $this->_requestIssuers();
         return $list;
@@ -205,7 +205,7 @@ class StandardClient
      * @param Request\TransactionRequest $transactionRequest
      * @return array
      */
-    public function requestTransaction(Request\TransactionRequest $transactionRequest)
+    public function sendTransactionRequest(Request\TransactionRequest $transactionRequest)
     {
         $xml = $this->_createXmlForRequestTransaction(
             array(
@@ -269,7 +269,7 @@ class StandardClient
      * @param Request\StatusRequest $statusRequest
      * @return array
      */
-    public function requestStatus(Request\StatusRequest $statusRequest)
+    public function sendStatusRequest(Request\StatusRequest $statusRequest)
     {
         $xml = $this->_createXmlForRequestStatus(
             array(
