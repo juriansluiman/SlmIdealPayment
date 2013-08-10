@@ -1,0 +1,45 @@
+<?php
+/**
+ * SlmIdealPayment Configuration
+ *
+ * If you have a ./configs/autoload/ directory set up for your project, you can
+ * drop this config file in it and change the values as you wish.
+ */
+$idealPayment = array(
+    /**
+     * ID of the merchant
+     *
+     * Usually the ID is something like 00X0XXXXX
+     */
+    'merchant_id' => '',
+
+    /**
+     * Sub ID if the merchant uses multiple shops
+     *
+     * By default, you can leave this value to zero
+     */
+    'sub_id' => '0',
+
+    /**
+     * Flag for production mode
+     *
+     * Set to false, it uses all testing urls for
+     * the different acquirers
+     */
+    'production' => true,
+
+    /**
+     * Location of the key file
+     */
+    'key_file' => '',
+
+    /**
+     * Password to open the key file
+     */
+    'key_password' => '',
+);
+
+/**
+ * You do not need to edit below this line
+ */
+return array('slm_ideal_paymemt' => $idealPayment);
