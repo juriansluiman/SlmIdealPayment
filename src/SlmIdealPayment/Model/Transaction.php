@@ -44,26 +44,34 @@ namespace SlmIdealPayment\Model;
 
 class Transaction
 {
-    const STATUS_UNKNOWN   = 'Unknown';
-    const STATUS_OPEN      = 'Open';
-    const STATUS_SUCCESS   = 'Success';
-    const STATUS_FAILURE   = 'Failure';
-    const STATUS_CANCELLED = 'Cancelled';
-    const STATUS_EXPIRED   = 'Expired';
+    const STATUS_UNKNOWN     = 'Unknown';
+    const STATUS_OPEN        = 'Open';
+    const STATUS_SUCCESS     = 'Success';
+    const STATUS_FAILURE     = 'Failure';
+    const STATUS_CANCELLED   = 'Cancelled';
+    const STATUS_EXPIRED     = 'Expired';
 
+    const DEFAULT_EXPIRATION = 'PT15M';
+
+    /**#@+
+     * @var string
+     */
     protected $purchaseId;
     protected $amount;
-    protected $expirationPeriod;
+    protected $expirationPeriod = self::DEFAULT_EXPIRATION;
     protected $description;
     protected $entranceCode;
     protected $transactionId;
-
     protected $status = self::STATUS_UNKNOWN;
+
     /**
      * @var Consumer;
      */
     protected $consumer;
 
+    /**#@+
+     * @var string
+     */
     protected $language = 'nl';
     protected $currency = 'EUR';
 

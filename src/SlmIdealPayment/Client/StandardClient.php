@@ -72,12 +72,6 @@ class StandardClient implements ClientInterface
 
     protected $httpClient;
 
-    /**
-     * @var string
-     */
-    const EXPIRATION = 'PT1H';
-    const CURRENCY   = 'EUR';
-
     public function getRequestUrl()
     {
         return $this->requestUrl;
@@ -242,8 +236,8 @@ class StandardClient implements ClientInterface
                 'returnUrl'   => $transactionRequest->getReturnUrl(),
                 'purchaseId'  => $transactionRequest->getTransaction()->getPurchaseId(),
                 'amount'      => round($transactionRequest->getTransaction()->getAmount() / 100, 2),
-                'expiration'  => self::EXPIRATION,
-                'currency'    => self::CURRENCY,
+                'expiration'  => $transactionRequest->getTransaction()->getExpirationPeriod(),
+                'currency'    => $transactionRequest->getTransaction()->getCurrency(),
                 'language'    => $transactionRequest->getTransaction()->getLanguage(),
                 'description' => $transactionRequest->getTransaction()->getDescription(),
                 'entrance'    => $transactionRequest->getTransaction()->getEntranceCode()
