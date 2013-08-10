@@ -199,4 +199,10 @@ class Transaction
     {
         return $this->currency;
     }
+
+    public function setCurrency($currency)
+    {
+        $this->currency = $currency;
+        return $this;
+    }
 }
