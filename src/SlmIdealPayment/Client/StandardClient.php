@@ -42,10 +42,8 @@
 
 namespace SlmIdealPayment\Client;
 
-use SimpleXMLElement;
 use DOMDocument;
-
-use RunTimeException;
+use DOMNode;
 
 use SlmIdealPayment\Request;
 use SlmIdealPayment\Response;
@@ -53,7 +51,6 @@ use SlmIdealPayment\Model;
 
 use Zend\Http\Client as HttpClient;
 use Zend\Http\Response as HttpResponse;
-use Zend\Math\Rand;
 
 use SlmIdealPayment\Exception;
 
@@ -177,42 +174,31 @@ class StandardClient implements ClientInterface
         return $this->subId;
     }
 
-
     /**
      * {@inheritdoc}
      */
     public function sendDirectoryRequest(Request\DirectoryRequest $directoryRequest)
     {
-        $xml = $this->createXmlForRequestIssuers(
-            array(
-                'merchantId' => $this->getMerchantId(),
-                'subId'      => $this->getSubId(),
-            )
-        );
+        $xml = $this->createXmlForRequestIssuers(array(
+            'merchantId' => $this->getMerchantId(),
+            'subId'      => $this->getSubId(),
+        ));
 
         $response = $this->send($xml);
 
-        if ('DirectoryRes' !== $response->getName()) {
-            throw new \RuntimeException('iDeal error: expects DirectoryRes as root element');
+        if ('DirectoryRes' !== $response->firstChild->nodeName) {
+            throw new Exception\IdealRequestException('Expecting DirectoryRes as root element in response');
         }
 
         $countries = array();
-        foreach ($response->Directory->children() as $child) {
-            if ('Country' !== $child->getName()) {
-                continue;
-            }
-            $country = (string)$child->countryNames;
-
+        foreach ($response->getElementsByTagName('Country') as $child) {
+            $country = $child->getElementsByTagName('countryNames')->item(0)->textContent;
 
             $list = array();
-            foreach ($child->children() as $issuer) {
-                if ('Issuer' !== $issuer->getName()) {
-                    continue;
-                }
-
+            foreach ($child->getElementsByTagName('Issuer') as $issuer) {
                 $issuerModel = new Model\Issuer();
-                $issuerModel->setId((string)$issuer->issuerID);
-                $issuerModel->setName((string)$issuer->issuerName);
+                $issuerModel->setId($this->getTag($issuer, 'issuerID'));
+                $issuerModel->setName($this->getTag($issuer, 'issuerName'));
 
                 $list[] = $issuerModel;
             }
@@ -220,7 +206,7 @@ class StandardClient implements ClientInterface
             $countries[$country] = $list;
         }
 
-
+        // @todo create a DirectoryResponse and insert all issuers there
         return $countries;
     }
 
@@ -229,50 +215,34 @@ class StandardClient implements ClientInterface
      */
     public function sendTransactionRequest(Request\TransactionRequest $transactionRequest)
     {
-        $xml = $this->_createXmlForRequestTransaction(
-            array(
-                'issuerId'    => $transactionRequest->getIssuer()->getId(),
-                'merchantId'  => $this->getMerchantId(),
-                'subId'       => $this->getSubId(),
-                'returnUrl'   => $transactionRequest->getReturnUrl(),
-                'purchaseId'  => $transactionRequest->getTransaction()->getPurchaseId(),
-                'amount'      => round($transactionRequest->getTransaction()->getAmount() / 100, 2),
-                'expiration'  => $transactionRequest->getTransaction()->getExpirationPeriod(),
-                'currency'    => $transactionRequest->getTransaction()->getCurrency(),
-                'language'    => $transactionRequest->getTransaction()->getLanguage(),
-                'description' => $transactionRequest->getTransaction()->getDescription(),
-                'entrance'    => $transactionRequest->getTransaction()->getEntranceCode()
-            )
-        );
+        $xml = $this->_createXmlForRequestTransaction(array(
+            'issuerId'    => $transactionRequest->getIssuer()->getId(),
+            'merchantId'  => $this->getMerchantId(),
+            'subId'       => $this->getSubId(),
+            'returnUrl'   => $transactionRequest->getReturnUrl(),
+            'purchaseId'  => $transactionRequest->getTransaction()->getPurchaseId(),
+            'amount'      => $transactionRequest->getTransaction()->getAmount(),
+            'expiration'  => $transactionRequest->getTransaction()->getExpirationPeriod(),
+            'currency'    => $transactionRequest->getTransaction()->getCurrency(),
+            'language'    => $transactionRequest->getTransaction()->getLanguage(),
+            'description' => $transactionRequest->getTransaction()->getDescription(),
+            'entrance'    => $transactionRequest->getTransaction()->getEntranceCode()
+        ));
 
         $response = $this->send($xml);
 
-        $authenticationUrl = '';
-        $transactionId     = '';
-        $purchaseId        = '';
-        foreach ($response->children() as $child) {
-            if ('Issuer' === $child->getName()) {
-                foreach ($child->children() as $property) {
-                    if ('issuerAuthenticationURL' === $property->getName()) {
-                        $authenticationUrl = (string)$property;
-                    }
-                }
-            } elseif ('Transaction' === $child->getName()) {
-                foreach ($child->children() as $property) {
-                    if ('transactionID' === $property->getName()) {
-                        $transactionId = (string)$property;
-                    } elseif ('purchaseID' === $property->getName()) {
-                        $purchaseId = (string)$property;
-                    }
-                }
-            }
+        if ('AcquirerTrxRes' !== $response->firstChild->nodeName) {
+            throw new Exception\IdealRequestException('Expecting AcquirerTrxRes as root element in response');
         }
 
-        $response = new Response\TransactionResponse();
-        $response->setAuthenticationUrl($authenticationUrl);
+        $url = $this->getTag($response, 'issuerAuthenticationURL');
+
         $transaction = new Model\Transaction();
-        $transaction->setTransactionId($transactionId);
-        $transaction->setPurchaseId($purchaseId);
+        $transaction->setTransactionId($this->getTag($response, 'transactionID'));
+        $transaction->setPurchaseId($this->getTag($response, 'purchaseID'));
+
+        $response = new Response\TransactionResponse();
+        $response->setAuthenticationUrl($url);
         $response->setTransaction($transaction);
 
         return $response;
@@ -293,32 +263,28 @@ class StandardClient implements ClientInterface
 
         $response = $this->send($xml);
 
-        $transaction = array();
-        foreach ($response->children() as $child) {
-            if ('Transaction' === $child->getName()) {
-                foreach ($child->children() as $property) {
-                    $transaction[$property->getName()] = (string)$property;
-                }
-            }
+        if ('AcquirerStatusRes' !== $response->firstChild->nodeName) {
+            throw new Exception\IdealRequestException('Expecting AcquirerStatusRes as root element in response');
         }
 
-        $transactionModel = new Model\Transaction();
-        $transactionModel->setTransactionId($transaction['transactionID']);
-        $transactionModel->setStatus($transaction['status']);
+        $transaction = new Model\Transaction();
+        $transaction->setTransactionId($this->getTag($response, 'transactionID'));
+        $transaction->setStatus($this->getTag($response, 'status'));
+        // statusDateTimestamp
 
         $consumer = new Model\Consumer();
-        $consumer->setName($transaction['consumerName']);
-        $consumer->setAccountIBAN($transaction['consumerIBAN']);
-        $consumer->setAccountBIC($transaction['consumerBIC']);
+        $consumer->setName($this->getTag($response, 'consumerName'));
+        $consumer->setAccountIBAN($this->getTag($response, 'consumerIBAN'));
+        $consumer->setAccountBIC($this->getTag($response, 'consumerBIC'));
 
-        $transactionModel->setAmount($transaction['amount']);
-        $transactionModel->setCurrency($transaction['currency']);
-        $transactionModel->setConsumer($consumer);
+        $transaction->setAmount($this->getTag($response, 'amount'));
+        $transaction->setCurrency($this->getTag($response, 'currency'));
+        $transaction->setConsumer($consumer);
 
-        $transactionResponse = new Response\TransactionResponse();
-        $transactionResponse->setTransaction($transactionModel);
+        $response = new Response\TransactionResponse();
+        $response->setTransaction($transaction);
 
-        return $transactionResponse;
+        return $response;
     }
 
     protected function send(DOMDocument $document)
@@ -341,16 +307,23 @@ class StandardClient implements ClientInterface
             throw new Exception\IdealRequestException('iDEAL response is invalid');
         }
 
-        $xml  = simplexml_load_string($body);
+        $document = new DOMDocument;
+        $document->loadXML($body);
 
-        if (isset($xml->Error)) {
-            $error = $xml->Error;
+        $errors = $document->getElementsByTagName('Error');
+        if ($errors->length !== 0) {
+            $error = $errors->item(0);
+
+            $code    = $this->getTag($error, 'errorCode');
+            $message = $this->getTag($error, 'errorMessage');
+            $detail  = $this->getTag($error, 'errorDetail');
+
             throw new Exception\IdealRequestException(
-                sprintf('%s (%s): "%s"', $error->errorMessage, $error->errorCode, $error->errorDetail)
+                sprintf('%s (%s): "%s"', $message, $code, $detail)
             );
         }
 
-        return $xml;
+        return $document;
     }
 
     protected function getFingerprint($public = false)
@@ -358,7 +331,7 @@ class StandardClient implements ClientInterface
         $certificate = ($public) ? $this->getPublicCertificate() : $this->getPrivateCertificate();
 
         if (false === ($fp = fopen($certificate, 'r'))) {
-            throw new RuntimeException('Cannot open certificate file');
+            throw new Exception\CertificateNotFoundException('Cannot open certificate file');
         }
 
         $rawData = fread($fp, 8192);
@@ -366,7 +339,7 @@ class StandardClient implements ClientInterface
         fclose($fp);
 
         if (!openssl_x509_export($data, $data)) {
-            throw new RuntimeException('Error in certificate');
+            throw new Exception\CertificateNotValidException('Error in certificate');
         }
 
         $data = str_replace(array('-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----'), '', $data);
@@ -426,6 +399,11 @@ class StandardClient implements ClientInterface
         return false;
     }
 
+    protected function getTag(DOMNode $element, $tag)
+    {
+        return $element->getElementsByTagName($tag)->item(0)->textContent;
+    }
+
     /**
      * Create signed XML to request issuer listing
      *
@@ -448,9 +426,9 @@ class StandardClient implements ClientInterface
   </Merchant>
 </DirectoryReq>
 EOT;
-        $document = new \DOMDocument();
+        $document = new DOMDocument();
         $document->loadXML($xml);
-        // Sign document and return
+
         return $this->sign($document);
     }
 
