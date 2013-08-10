@@ -186,8 +186,47 @@ class StandardClient implements ClientInterface
      */
     public function sendDirectoryRequest(Request\DirectoryRequest $directoryRequest)
     {
-        $list = $this->_requestIssuers();
-        return $list;
+        $xml = $this->createXmlForRequestIssuers(
+            array(
+                'merchantId' => $this->getMerchantId(),
+                'subId'      => $this->getSubId(),
+            )
+        );
+
+
+        $response = $this->_postMessageXml($xml->saveXML());
+
+
+        if ('DirectoryRes' !== $response->getName()) {
+            throw new \RuntimeException('iDeal error: expects DirectoryRes as root element');
+        }
+
+        $countries = array();
+        foreach ($response->Directory->children() as $child) {
+            if ('Country' !== $child->getName()) {
+                continue;
+            }
+            $country = (string)$child->countryNames;
+
+
+            $list = array();
+            foreach ($child->children() as $issuer) {
+                if ('Issuer' !== $issuer->getName()) {
+                    continue;
+                }
+
+                $issuerModel = new Model\Issuer();
+                $issuerModel->setId((string)$issuer->issuerID);
+                $issuerModel->setName((string)$issuer->issuerName);
+
+                $list[] = $issuerModel;
+            }
+
+            $countries[$country] = $list;
+        }
+
+
+        return $countries;
     }
 
     /**
@@ -285,55 +324,6 @@ class StandardClient implements ClientInterface
         $transactionResponse->setTransaction($transactionModel);
 
         return $transactionResponse;
-    }
-
-    /**
-     * @return Model\Issuer[]
-     * @throws \RuntimeException
-     */
-    protected function _requestIssuers()
-    {
-        $xml = $this->createXmlForRequestIssuers(
-            array(
-                'merchantId' => $this->getMerchantId(),
-                'subId'      => $this->getSubId(),
-            )
-        );
-
-
-        $response = $this->_postMessageXml($xml->saveXML());
-
-
-        if ('DirectoryRes' !== $response->getName()) {
-            throw new \RuntimeException('iDeal error: expects DirectoryRes as root element');
-        }
-
-        $countries = array();
-        foreach ($response->Directory->children() as $child) {
-            if ('Country' !== $child->getName()) {
-                continue;
-            }
-            $country = (string)$child->countryNames;
-
-
-            $list = array();
-            foreach ($child->children() as $issuer) {
-                if ('Issuer' !== $issuer->getName()) {
-                    continue;
-                }
-
-                $issuerModel = new Model\Issuer();
-                $issuerModel->setId((string)$issuer->issuerID);
-                $issuerModel->setName((string)$issuer->issuerName);
-
-                $list[] = $issuerModel;
-            }
-
-            $countries[$country] = $list;
-        }
-
-
-        return $countries;
     }
 
     protected function _postMessage(DOMDocument $document)
