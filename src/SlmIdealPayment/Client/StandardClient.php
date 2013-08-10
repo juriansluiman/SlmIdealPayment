@@ -182,12 +182,7 @@ class StandardClient implements ClientInterface
 
 
     /**
-     * Create request for a list of available issuers
-     *
-     * Return array is a key=>value for a shortlist and a longlist of
-     * issuers available with keys respectively 'short' and 'long'.
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function sendDirectoryRequest(Request\DirectoryRequest $directoryRequest)
     {
@@ -196,14 +191,7 @@ class StandardClient implements ClientInterface
     }
 
     /**
-     * Create a request to start a transaction
-     *
-     * Based on the order information, a request is send to the iDeal server
-     * to request for a url. The url will be used to send the user to, to
-     * perform the actual transaction.
-     *
-     * @param Request\TransactionRequest $transactionRequest
-     * @return array
+     * {@inheritdoc}
      */
     public function sendTransactionRequest(Request\TransactionRequest $transactionRequest)
     {
@@ -257,17 +245,7 @@ class StandardClient implements ClientInterface
     }
 
     /**
-     * Create a request to validate the transaction
-     *
-     * Every transaction must be validated if the payment is completed. The
-     * request is made to the iDeal server, based on the given transactionId
-     * which was a return value for the request for transaction.
-     *
-     * In case of a failed transaction, false will be returned. In case of a
-     * succeeded transaction, true will be returned.
-     *
-     * @param Request\StatusRequest $statusRequest
-     * @return array
+     * {@inheritdoc}
      */
     public function sendStatusRequest(Request\StatusRequest $statusRequest)
     {
