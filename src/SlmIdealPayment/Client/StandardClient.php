@@ -413,33 +413,6 @@ class StandardClient implements ClientInterface
         return strtoupper(sha1(base64_decode($data)));
     }
 
-    protected function _getSignature($message)
-    {
-        if (false === ($fp = fopen($this->_keyFile, 'r'))) {
-            throw new RuntimeException('Cannot open key file');
-        }
-
-        $keyFile = fread($fp, 8192);
-        fclose($fp);
-
-        if (!$privateKey = openssl_pkey_get_private($keyFile, $this->_keyPassword)) {
-            throw new RuntimeException('Invalid password for key file');
-        }
-
-        $signature = '';
-        if (!opensslsign($message, $signature, $privateKey)) {
-            throw new RuntimeException('Cannot sign message with private key');
-        }
-
-        openssl_free_key($privateKey);
-        return base64_encode($signature);
-    }
-
-    public function getEntranceCode(Deal_Model_Order $order)
-    {
-        return Rand::getString(40, implode(array_merge(range('a', 'z'), range('A', 'Z'), range(1, 9))));
-    }
-
     protected function sign(DOMDocument $document)
     {
         $objDSig = new \XMLSecurityDSig();
