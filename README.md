@@ -19,10 +19,13 @@ advanced method. Integration via iDEAL basic / iDEAL lite is not included.
 > framework in your own application. There is no need to understand Zend
 > Framework 2 to use this module.
 
-Requirements
----
-The module only requires a HTTP client where it utilizes the `Zend\Http`
-component. Furthermore php 5.3+ is required to work with.
+### Supported acquirers
+
+SlmIdealPayment works with the following banks (or acquirers in iDEAL terms):
+
+ 1. Rabobank
+ 2. ING Bank
+ 3. ABN Amro
 
 Installation
 ---
@@ -73,14 +76,6 @@ openssl req –x509 –sha256 –new –key priv.pem –passin pass:[privateKeyP
 ```
 
 Then use the `priv.pem` and `cert.cer` files for the iDEAL signatures.
-
-Supported acquirers
----
-SlmIdealPayment works with the following banks (or acquirers in iDEAL terms):
-
- 1. Rabobank
- 2. ING Bank
- 3. ABN Amro
 
 Usage
 ---
@@ -161,3 +156,26 @@ $response = $client->send($request);
 
 echo $response->getTransaction()->getStatus();
 ```
+
+Using SlmIdealPayment outside Zend Framework 2
+===
+You can use the client without Zend Framework 2. Only the HTTP client is used
+inside the client and it's a small dependency you can load in any project you
+have. However, you need to configure all variables yourself.
+
+```php
+use SlmIdealPayment\Client\StandardClient;
+
+$client = new StandardClient;
+$client->setRequestUrl('https://ideal.rabobank.nl/ideal/iDEALv3');
+$client->setMerchantId('00X0XXXXX');
+$client->setSubId('0');
+
+$client->setPublicCertificate('data/ssl/rabobank.cer');
+$client->setPrivateCertificate('data/ssl/cert.cer');
+
+$client->setKeyFile('data/ssl/priv.pem');
+$client->setKeyPassword('h4x0r');
+```
+
+Now `$client` is configured, use above methods to perform the various requests.
