@@ -11,10 +11,10 @@ of payments for almost all Dutch banks.
 The module provides integration for the so-called iDEAL professional / iDEAL
 advanced method. Integration via iDEAL basic / iDEAL lite is not included.
 
-### Standalone usage
-This module is developed for Zend Framework 2, but can be used without the
-framework in your own application. There is no need to understand Zend Framework
-2 to use this module.
+> **Standalone usage**
+> This module is developed for Zend Framework 2, but can be used without the
+> framework in your own application. There is no need to understand Zend
+> Framework 2 to use this module.
 
 Requirements
 ---
