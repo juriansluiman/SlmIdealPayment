@@ -101,7 +101,7 @@ $response = $client->send($request);
 foreach ($response->getContries() as $country) {
     echo sprintf("Country: %s\n", $country->getName());
 
-    foreach ($country->getIssuers as $issuer) {
+    foreach ($country->getIssuers() as $issuer) {
         echo sprintf("%s: %s\n", $issuer->getId(), $issuer->getName());
     }
 }
