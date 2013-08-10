@@ -157,7 +157,7 @@ $response = $client->send($request);
 echo $response->getTransaction()->getStatus();
 ```
 
-Using SlmIdealPayment outside Zend Framework 2
+Using SlmIdealPayment outside ZF2
 ===
 You can use the client without Zend Framework 2. Only the HTTP client is used
 inside the client and it's a small dependency you can load in any project you
