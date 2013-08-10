@@ -59,7 +59,7 @@ use SlmIdealPayment\Exception;
 
 class StandardClient implements ClientInterface
 {
-    /**
+    /**#@+
      * @var string
      */
     protected $requestUrl;
@@ -70,6 +70,9 @@ class StandardClient implements ClientInterface
     protected $keyFile;
     protected $keyPassword;
 
+    /**
+     * @var HttpClient
+     */
     protected $httpClient;
 
     public function getRequestUrl()
@@ -188,8 +191,6 @@ class StandardClient implements ClientInterface
         );
 
         $response = $this->send($xml);
-        $response = $this->extractResponse($response);
-
 
         if ('DirectoryRes' !== $response->getName()) {
             throw new \RuntimeException('iDeal error: expects DirectoryRes as root element');
@@ -245,7 +246,6 @@ class StandardClient implements ClientInterface
         );
 
         $response = $this->send($xml);
-        $response = $this->extractResponse($response);
 
         $authenticationUrl = '';
         $transactionId     = '';
@@ -292,7 +292,6 @@ class StandardClient implements ClientInterface
         );
 
         $response = $this->send($xml);
-        $response = $this->extractResponse($response);
 
         $transaction = array();
         foreach ($response->children() as $child) {
@@ -324,24 +323,24 @@ class StandardClient implements ClientInterface
 
     protected function send(DOMDocument $document)
     {
-        $data   = $document->saveXML();
-
         $client = $this->getHttpClient();
         $client->setUri($this->getRequestUrl());
-        $client->setRawBody($data);
+        $client->setRawBody($document->saveXML());
 
-        return $client->send();
-    }
+        $response = $client->send();
 
-    protected function extractResponse(HttpResponse $response)
-    {
         if (!$response->isOk()) {
+            // @todo supply status code + message
             throw new Exception\HttpRequestException(
                 'Request is not successfully executed'
             );
         }
 
         $body = $response->getBody();
+        if (!$this->isValid($body)) {
+            throw new Exception\IdealRequestException('iDEAL response is invalid');
+        }
+
         $xml  = simplexml_load_string($body);
 
         if (isset($xml->Error)) {
@@ -396,7 +395,7 @@ class StandardClient implements ClientInterface
         return $document;
     }
 
-    protected function _verify($response)
+    protected function isValid($response)
     {
         $document = new DOMDocument();
         $document->loadXML($response);
