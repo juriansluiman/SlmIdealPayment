@@ -193,8 +193,8 @@ class StandardClient implements ClientInterface
             )
         );
 
-
-        $response = $this->_postMessageXml($xml->saveXML());
+        $response = $this->send($xml);
+        $response = $this->extractResponse($response);
 
 
         if ('DirectoryRes' !== $response->getName()) {
@@ -250,7 +250,8 @@ class StandardClient implements ClientInterface
             )
         );
 
-        $response = $this->_postMessageXml($xml->saveXML());
+        $response = $this->send($xml);
+        $response = $this->extractResponse($response);
 
         $authenticationUrl = '';
         $transactionId     = '';
@@ -296,7 +297,8 @@ class StandardClient implements ClientInterface
             )
         );
 
-        $response = $this->_postMessageXml($xml->saveXML());
+        $response = $this->send($xml);
+        $response = $this->extractResponse($response);
 
         $transaction = array();
         foreach ($response->children() as $child) {
@@ -326,68 +328,33 @@ class StandardClient implements ClientInterface
         return $transactionResponse;
     }
 
-    protected function _postMessage(DOMDocument $document)
+    protected function send(DOMDocument $document)
     {
-        $xml = $document->saveXML();
+        $data   = $document->saveXML();
 
-        $response = $this->_postMessageXml($xml);
-        return $this->_parseResponse($response);
+        $client = $this->getHttpClient();
+        $client->setUri($this->getRequestUrl());
+        $client->setRawBody($data);
+
+        return $client->send();
     }
 
-    /**
-     * @param $xml
-     * @return SimpleXMLElement
-     * @throws \Exception
-     */
-    protected function _postMessageXml($xml)
+    protected function extractResponse(HttpResponse $response)
     {
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $this->getRequestUrl());
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/xml'));
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-        $output = curl_exec($ch);
-        curl_close($ch);
-
-        $prev = libxml_use_internal_errors(true);
-
-        $xml = simplexml_load_string($output);
-        if ($xml === false) {
-            $errors = "";
-            foreach (libxml_get_errors() as $error) {
-                $errors .= sprintf("%s\n", $error->message);
-            }
-            throw new \Exception(sprintf("The response packet could not be successfully parsed: %s", $errors));
-        }
-        libxml_use_internal_errors($prev);
-
-        return $xml;
-    }
-
-    protected function _parseResponse($response)
-    {
-        if (!$this->_verify($response)) {
-            throw new RuntimeException('Response from server is invalid!');
+        if (!$response->isOk()) {
+            throw new Exception\HttpRequestException(
+                'Request is not successfully executed'
+            );
         }
 
-        $xml = new SimpleXMLElement($response);
+        $body = $response->getBody();
+        $xml  = simplexml_load_string($body);
 
         if (isset($xml->Error)) {
             $error = $xml->Error;
-
-            $message = sprintf(
-                '%s (%s): %s',
-                $error->errorMessage,
-                $error->errorCode,
-                $error->errorDetail
+            throw new Exception\IdealRequestException(
+                sprintf('%s (%s): "%s"', $error->errorMessage, $error->errorCode, $error->errorDetail)
             );
-
-            throw new RuntimeException($message);
         }
 
         return $xml;
