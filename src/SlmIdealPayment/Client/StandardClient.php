@@ -221,14 +221,10 @@ class StandardClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function sendDirectoryRequest(Request\DirectoryRequest $directoryRequest)
+    public function sendDirectoryRequest(Request\DirectoryRequest $request)
     {
-        $xml = $this->createXmlForRequestIssuers(array(
-            'merchantId' => $this->getMerchantId(),
-            'subId'      => $this->getSubId(),
-        ));
-
-        $response = $this->request($xml);
+        $document = $this->getDirectoryRequestXML();
+        $response = $this->request($document);
 
         if ('DirectoryRes' !== $response->firstChild->nodeName) {
             throw new Exception\IdealRequestException('Expecting DirectoryRes as root element in response');
@@ -257,23 +253,10 @@ class StandardClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function sendTransactionRequest(Request\TransactionRequest $transactionRequest)
+    public function sendTransactionRequest(Request\TransactionRequest $request)
     {
-        $xml = $this->_createXmlForRequestTransaction(array(
-            'issuerId'    => $transactionRequest->getIssuer()->getId(),
-            'merchantId'  => $this->getMerchantId(),
-            'subId'       => $this->getSubId(),
-            'returnUrl'   => $transactionRequest->getReturnUrl(),
-            'purchaseId'  => $transactionRequest->getTransaction()->getPurchaseId(),
-            'amount'      => $transactionRequest->getTransaction()->getAmount(),
-            'expiration'  => $transactionRequest->getTransaction()->getExpirationPeriod(),
-            'currency'    => $transactionRequest->getTransaction()->getCurrency(),
-            'language'    => $transactionRequest->getTransaction()->getLanguage(),
-            'description' => $transactionRequest->getTransaction()->getDescription(),
-            'entrance'    => $transactionRequest->getTransaction()->getEntranceCode()
-        ));
-
-        $response = $this->request($xml);
+        $document = $this->getTransactionRequestXML($request);
+        $response = $this->request($document);
 
         if ('AcquirerTrxRes' !== $response->firstChild->nodeName) {
             throw new Exception\IdealRequestException('Expecting AcquirerTrxRes as root element in response');
@@ -295,17 +278,10 @@ class StandardClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function sendStatusRequest(Request\StatusRequest $statusRequest)
+    public function sendStatusRequest(Request\StatusRequest $request)
     {
-        $xml = $this->_createXmlForRequestStatus(
-            array(
-                'merchantId'    => $this->getMerchantId(),
-                'subId'         => $this->getSubId(),
-                'transactionId' => $statusRequest->getTransaction()->getTransactionId()
-            )
-        );
-
-        $response = $this->request($xml);
+        $document = $this->getStatusRequestXML($request);
+        $response = $this->request($document);
 
         if ('AcquirerStatusRes' !== $response->firstChild->nodeName) {
             throw new Exception\IdealRequestException('Expecting AcquirerStatusRes as root element in response');
@@ -425,27 +401,12 @@ class StandardClient implements ClientInterface
     /**
      * Create signed XML to request issuer listing
      *
-     * @param  array $data
      * @return DOMDocument
      */
-    protected function createXmlForRequestIssuers(array $data)
+    protected function getDirectoryRequestXML()
     {
-        $timestamp = utf8_encode(gmdate('Y-m-d\TH:i:s.000\Z'));
-        $merchant  = $data['merchantId'];
-        $subid     = $data['subId'];
-
-        $xml      = <<<EOT
-<?xml version="1.0" encoding="UTF-8"?>
-<DirectoryReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">
-  <createDateTimestamp>$timestamp</createDateTimestamp>
-  <Merchant>
-    <merchantID>$merchant</merchantID>
-    <subID>$subid</subID>
-  </Merchant>
-</DirectoryReq>
-EOT;
-        $document = new DOMDocument();
-        $document->loadXML($xml);
+        $document = $this->createXMLMessage('DirectoryReq');
+        $document = $this->repairDOMDocument($document);
 
         $this->sign($document);
         $this->validate($document);
@@ -453,49 +414,36 @@ EOT;
         return $document;
     }
 
-    protected function _createXmlForRequestTransaction(array $data)
+    /**
+     * Create signed XML to request a transaction
+     *
+     * @param  Request\TransactionRequest $request
+     * @return DOMDocument
+     */
+    protected function getTransactionRequestXML(Request\TransactionRequest $request)
     {
-        $timestamp = utf8_encode(gmdate('Y-m-d\TH:i:s.000\Z'));
+        $document = $this->createXMLMessage('AcquirerTrxReq');
 
-        $issuer = $data['issuerId'];
+        $issuer = $document->createElement('Issuer');
+        $issuer->appendChild($document->createElement('issuerID', $request->getIssuer()->getId()));
 
-        $merchant  = $data['merchantId'];
-        $subid     = $data['subId'];
-        $returnUrl = $data['returnUrl'];
+        $transaction = $document->createElement('Transaction');
+        $transaction->appendChild($document->createElement('purchaseID', $request->getTransaction()->getPurchaseId()));
+        $transaction->appendChild($document->createElement('amount', $request->getTransaction()->getAmount()));
+        $transaction->appendChild($document->createElement('currency', $request->getTransaction()->getCurrency()));
+        $transaction->appendChild($document->createElement('expirationPeriod', $request->getTransaction()->getExpirationPeriod()));
+        $transaction->appendChild($document->createElement('language', $request->getTransaction()->getLanguage()));
+        $transaction->appendChild($document->createElement('description', $request->getTransaction()->getDescription()));
+        $transaction->appendChild($document->createElement('entranceCode', $request->getTransaction()->getEntranceCode()));
 
-        $purchaseId  = $data['purchaseId'];
-        $amount      = $data['amount'];
-        $currency    = $data['currency'];
-        $expiration  = $data['expiration'];
-        $language    = $data['language'];
-        $description = $data['description'];
-        $entrance    = $data['entrance'];
+        $merchant = $document->getElementsByTagName('Merchant')->item(0);
+        $merchant->appendChild($document->createElement('merchantReturnURL', $request->getReturnUrl()));
 
-        $xml      = <<<EOT
-<?xml version="1.0" encoding="UTF-8"?>
-<AcquirerTrxReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">
-  <createDateTimestamp>$timestamp</createDateTimestamp>
-  <Issuer>
-    <issuerID>$issuer</issuerID>
-  </Issuer>
-  <Merchant>
-    <merchantID>$merchant</merchantID>
-    <subID>$subid</subID>
-    <merchantReturnURL>$returnUrl</merchantReturnURL>
-  </Merchant>
-  <Transaction>
-    <purchaseID>$purchaseId</purchaseID>
-    <amount>$amount</amount>
-    <currency>$currency</currency>
-    <expirationPeriod>$expiration</expirationPeriod>
-    <language>$language</language>
-    <description>$description</description>
-    <entranceCode>$entrance</entranceCode>
-  </Transaction>
-</AcquirerTrxReq>
-EOT;
-        $document = new DOMDocument();
-        $document->loadXML($xml);
+        $request = $document->getElementsByTagName('AcquirerTrxReq')->item(0);
+        $request->insertBefore($issuer, $merchant);
+        $request->appendChild($transaction);
+
+        $document = $this->repairDOMDocument($document);
 
         $this->sign($document);
         $this->validate($document);
@@ -503,34 +451,67 @@ EOT;
         return $document;
     }
 
-    protected function _createXmlForRequestStatus(array $data)
+    /**
+     * Create signed XML to request the status of a transaction
+     *
+     * @param  Request\StatusReqest $request
+     * @return DOMDocument
+     */
+    protected function getStatusRequestXML(Request\StatusRequest $request)
     {
-        $timestamp = utf8_encode(gmdate('Y-m-d\TH:i:s.000\Z'));
+        $document = $this->createXMLMessage('AcquirerStatusReq');
 
-        $merchant = $data['merchantId'];
-        $subid    = $data['subId'];
+        $transaction = $document->createElement('Transaction');
+        $transaction->appendChild($document->createElement('transactionID', $request->getTransaction()->getTransactionId()));
 
-        $transactionId = $data['transactionId'];
+        $request = $document->getElementsByTagName('AcquirerStatusReq')->item(0);
+        $request->appendChild($transaction);
 
-        $xml = <<<EOT
-<?xml version="1.0" encoding="UTF-8"?>
-<AcquirerStatusReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">
-  <createDateTimestamp>$timestamp</createDateTimestamp>
-  <Merchant>
-    <merchantID>$merchant</merchantID>
-    <subID>$subid</subID>
-  </Merchant>
-  <Transaction>
-    <transactionID>$transactionId</transactionID>
-  </Transaction>
-</AcquirerStatusReq>
-EOT;
-
-        $document = new DOMDocument();
-        $document->loadXML($xml);
+        $document = $this->repairDOMDocument($document);
 
         $this->sign($document);
         $this->validate($document);
+
+        return $document;
+    }
+
+    protected function createXMLMessage($rootElement)
+    {
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $request  = $document->createElement($rootElement);
+
+        $xmlns = $document->createAttribute('xmlns');
+        $xmlns->value = 'http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1';
+
+        $version = $document->createAttribute('version');
+        $version->value = '3.3.1';
+
+        $request->appendChild($xmlns);
+        $request->appendChild($version);
+
+        $merchant = $document->createElement('Merchant');
+        $merchant->appendChild($document->createElement('merchantID', $this->getMerchantId()));
+        $merchant->appendChild($document->createElement('subID', $this->getSubId()));
+
+        $request->appendChild($document->createElement('createDateTimestamp', $this->getTimestamp()));
+        $request->appendChild($merchant);
+
+        $document->appendChild($request);
+
+        return $document;
+    }
+
+    protected function getTimestamp()
+    {
+        return gmdate('Y-m-d\TH:i:s.000\Z');
+    }
+
+    protected function repairDOMDocument(DOMDocument $document)
+    {
+        $xml = $document->saveXML();
+
+        $document = new DOMDocument;
+        $document->loadXML($xml);
 
         return $document;
     }
