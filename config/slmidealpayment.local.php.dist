@@ -29,6 +29,11 @@ $idealPayment = array(
     'production' => true,
 
     /**
+     * Location of the certificate
+     */
+    'certificate' => '',
+
+    /**
      * Location of the key file
      */
     'key_file' => '',
@@ -37,9 +42,19 @@ $idealPayment = array(
      * Password to open the key file
      */
     'key_password' => '',
+
+    /**
+     * Flag to enable/disable XML validation
+     *
+     * SlmIdealPayment can validate all XML messages
+     * from the requests and responses against a provided
+     * XSD file. This gives tight control over the XML
+     * but can slow down the process.
+     */
+    'enable_validation' => true,
 );
 
 /**
  * You do not need to edit below this line
  */
-return array('slm_ideal_paymemt' => $idealPayment);
+return array('slm_ideal_payment' => $idealPayment);
