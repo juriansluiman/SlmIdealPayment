@@ -49,106 +49,32 @@ use SlmIdealPayment\Request;
 use SlmIdealPayment\Response;
 use SlmIdealPayment\Model;
 use SlmIdealPayment\Client\StandardClient\Signature;
+use SlmIdealPayment\Options\StandardClientOptions;
+use SlmIdealPayment\Exception;
 
 use Zend\Http\Client as HttpClient;
 use Zend\Http\Response as HttpResponse;
 
-use SlmIdealPayment\Exception;
-
 class StandardClient implements ClientInterface
 {
-    /**#@+
-     * @var string
+    /**
+     * @var Options
      */
-    protected $requestUrl;
-    protected $merchantId;
-    protected $subId;
-    protected $publicCertificate;
-    protected $privateCertificate;
-    protected $keyFile;
-    protected $keyPassword;
-    protected $validationSchema;
+    protected $options;
 
     /**
      * @var HttpClient
      */
     protected $httpClient;
 
-    public function getRequestUrl()
+    public function __construct(StandardClientOptions $options)
     {
-        return $this->requestUrl;
+        $this->options = $options;
     }
 
-    public function setRequestUrl($requestUrl)
+    public function getOptions()
     {
-        $this->requestUrl = $requestUrl;
-        return $this;
-    }
-
-    public function getPublicCertificate()
-    {
-        return $this->publicCertificate;
-    }
-
-    public function setPublicCertificate($publicCertificate)
-    {
-        $this->publicCertificate = $publicCertificate;
-        return $this;
-    }
-
-    public function getPrivateCertificate()
-    {
-        return $this->privateCertificate;
-    }
-
-    public function setPrivateCertificate($privateCertificate)
-    {
-        $this->privateCertificate = $privateCertificate;
-        return $this;
-    }
-
-    public function getKeyFile()
-    {
-        return $this->keyFile;
-    }
-
-    public function setKeyFile($keyFile)
-    {
-        $this->keyFile = $keyFile;
-        return $this;
-    }
-
-    public function getKeyPassword()
-    {
-        return $this->keyPassword;
-    }
-
-    public function setKeyPassword($keyPassword)
-    {
-        $this->keyPassword = $keyPassword;
-        return $this;
-    }
-
-    /**
-     * Getter for validation schema
-     *
-     * @return mixed
-     */
-    public function getValidationSchema()
-    {
-        return $this->validationSchema;
-    }
-
-    /**
-     * Setter for validation schema
-     *
-     * @param mixed $validationSchema Value to set
-     * @return self
-     */
-    public function setValidationSchema($validationSchema)
-    {
-        $this->validationSchema = $validationSchema;
-        return $this;
+        return $this->options;
     }
 
     public function getHttpClient()
@@ -164,38 +90,6 @@ class StandardClient implements ClientInterface
     {
         $this->httpClient = $httpClient;
         return $this;
-    }
-
-    /**
-     * @param mixed $merchantId
-     */
-    public function setMerchantId($merchantId)
-    {
-        $this->merchantId = $merchantId;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getMerchantId()
-    {
-        return $this->merchantId;
-    }
-
-    /**
-     * @param mixed $subId
-     */
-    public function setSubId($subId)
-    {
-        $this->subId = $subId;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getSubId()
-    {
-        return $this->subId;
     }
 
     /**
@@ -310,7 +204,7 @@ class StandardClient implements ClientInterface
     protected function request(DOMDocument $document)
     {
         $client = $this->getHttpClient();
-        $client->setUri($this->getRequestUrl());
+        $client->setUri($this->getOptions()->getRequestUrl());
         $client->setRawBody($document->saveXML());
 
         $response = $client->send();
@@ -354,7 +248,12 @@ class StandardClient implements ClientInterface
     protected function sign(DOMDocument $document)
     {
         $signature = new Signature;
-        $signature->sign($document, $this->getPrivateCertificate(), $this->getKeyFile(), $this->getKeyPassword());
+        $signature->sign(
+            $document,
+            $this->getOptions()->getPrivateCertificate(),
+            $this->getOptions()->getKeyFile(),
+            $this->getOptions()->getKeyPassword()
+        );
     }
 
     /**
@@ -368,7 +267,7 @@ class StandardClient implements ClientInterface
     {
         $signature = new Signature;
 
-        if (!$signature->verify($document, $this->getPublicCertificate())) {
+        if (!$signature->verify($document, $this->getOptions()->getPublicCertificate())) {
             throw new Exception\IdealRequestException('iDEAL response could not be verified from acquirer');
         }
     }
@@ -382,7 +281,7 @@ class StandardClient implements ClientInterface
      */
     protected function validate(DOMDocument $document)
     {
-        if (null === ($schema = $this->getValidationSchema())) {
+        if (null === ($schema = $this->getOptions()->getValidationSchema())) {
             return;
         }
 
@@ -490,8 +389,8 @@ class StandardClient implements ClientInterface
         $request->appendChild($version);
 
         $merchant = $document->createElement('Merchant');
-        $merchant->appendChild($document->createElement('merchantID', $this->getMerchantId()));
-        $merchant->appendChild($document->createElement('subID', $this->getSubId()));
+        $merchant->appendChild($document->createElement('merchantID', $this->getOptions()->getMerchantId()));
+        $merchant->appendChild($document->createElement('subID', $this->getOptions()->getSubId()));
 
         $request->appendChild($document->createElement('createDateTimestamp', $this->getTimestamp()));
         $request->appendChild($merchant);

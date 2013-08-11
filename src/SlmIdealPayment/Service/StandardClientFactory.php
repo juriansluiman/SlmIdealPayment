@@ -41,6 +41,7 @@
 namespace SlmIdealPayment\Service;
 
 use SlmIdealPayment\Client\StandardClient;
+use SlmIdealPayment\Options\StandardClientOptions;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -55,16 +56,18 @@ class StandardClientFactory implements FactoryInterface
         $config = $serviceLocator->get('Config');
         $config = $config['slm_ideal_payment'];
 
-        $client = new StandardClient;
-        $client->setPrivateCertificate($config['certificate']);
-        $client->setKeyFile($config['key_file']);
-        $client->setKeyPassword($config['key_password']);
-        $client->setMerchantId($config['merchant_id']);
-        $client->setSubId($config['sub_id']);
+        $options = new StandardClientOptions;
+        $options->setPrivateCertificate($config['certificate']);
+        $options->setKeyFile($config['key_file']);
+        $options->setKeyPassword($config['key_password']);
+        $options->setMerchantId($config['merchant_id']);
+        $options->setSubId($config['sub_id']);
 
         if (true === $config['enable_validation']) {
-            $client->setValidationSchema($config['validation_scheme']);
+            $options->setValidationSchema($config['validation_scheme']);
         }
+
+        $client = new StandardClient($options);
 
         $httpClient = $client->getHttpClient();
         $httpClient->setAdapter('Zend\Http\Client\Adapter\Socket');
@@ -72,13 +75,13 @@ class StandardClientFactory implements FactoryInterface
         $client->setHttpClient($httpClient);
 
         if ('SlmIdealPayment\Client\StandardClient' !== $name) {
-            $this->configureAcquirer($client, $config, $name);
+            $this->configureAcquirer($options, $config, $name);
         }
 
         return $client;
     }
 
-    protected function configureAcquirer(StandardClient $client, array $config, $name)
+    protected function configureAcquirer(StandardClientOptions $options, array $config, $name)
     {
         /**
          * Canonicalize name
@@ -90,9 +93,7 @@ class StandardClientFactory implements FactoryInterface
         $url  = ($config['production']) ? $config[$name]['live'] : $config[$name]['test'];
         $cert = $config[$name]['certificate'];
 
-        $client->setRequestUrl($url);
-        $client->setPublicCertificate($cert);
-
-        return $client;
+        $options->setRequestUrl($url);
+        $options->setPublicCertificate($cert);
     }
 }
