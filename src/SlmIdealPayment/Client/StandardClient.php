@@ -369,26 +369,6 @@ class StandardClient implements ClientInterface
         return $document;
     }
 
-    protected function getFingerprint($public = false)
-    {
-        $certificate = ($public) ? $this->getPublicCertificate() : $this->getPrivateCertificate();
-
-        if (false === ($fp = fopen($certificate, 'r'))) {
-            throw new Exception\CertificateNotFoundException('Cannot open certificate file');
-        }
-
-        $rawData = fread($fp, 8192);
-        $data    = openssl_x509_read($rawData);
-        fclose($fp);
-
-        if (!openssl_x509_export($data, $data)) {
-            throw new Exception\CertificateNotValidException('Error in certificate');
-        }
-
-        $data = str_replace(array('-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----'), '', $data);
-        return strtoupper(sha1(base64_decode($data)));
-    }
-
     /**
      * Sign document and append <Signature> dom node
      *
@@ -398,7 +378,7 @@ class StandardClient implements ClientInterface
     protected function sign(DOMDocument $document)
     {
         $signature = new Signature;
-        $signature->sign($document, $this->getFingerprint(), $this->getKeyFile(), $this->getKeyPassword());
+        $signature->sign($document, $this->getPrivateCertificate(), $this->getKeyFile(), $this->getKeyPassword());
     }
 
     /**

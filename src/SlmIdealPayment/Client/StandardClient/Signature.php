@@ -23,7 +23,7 @@ class Signature
         }
     }
 
-    public function sign(DOMDocument $document, $fingerprint, $keyfile, $passphrase = null)
+    public function sign(DOMDocument $document, $certificate, $keyfile, $passphrase = null)
     {
         $dsig = new XMLSecurityDSig();
         $dsig->setCanonicalMethod(XMLSecurityDSig::EXC_C14N);
@@ -40,7 +40,7 @@ class Signature
         $key->loadKey($keyfile, true);
         $dsig->sign($key);
 
-        $dsig->addKeyInfoAndName($fingerprint);
+        $dsig->addKeyInfoAndName($this->getFingerprint($certificate));
         $dsig->appendSignature($document->documentElement);
     }
 
@@ -66,5 +66,23 @@ class Signature
         $key->loadKey($certificate, true);
 
         return (bool) $dsig->verify($key);
+    }
+
+    protected function getFingerprint($path)
+    {
+        if (false === ($fp = fopen($path, 'r'))) {
+            throw new Exception\CertificateNotFoundException('Cannot open certificate file');
+        }
+
+        $rawData = fread($fp, 8192);
+        $data    = openssl_x509_read($rawData);
+        fclose($fp);
+
+        if (!openssl_x509_export($data, $data)) {
+            throw new Exception\CertificateNotValidException('Error in certificate');
+        }
+
+        $data = str_replace(array('-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----'), '', $data);
+        return strtoupper(sha1(base64_decode($data)));
     }
 }
