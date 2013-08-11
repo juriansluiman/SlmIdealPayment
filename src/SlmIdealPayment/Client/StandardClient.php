@@ -126,22 +126,28 @@ class StandardClient implements ClientInterface
 
         $countries = array();
         foreach ($response->getElementsByTagName('Country') as $child) {
-            $country = $child->getElementsByTagName('countryNames')->item(0)->textContent;
+            $name = $child->getElementsByTagName('countryNames')->item(0)->textContent;
 
-            $list = array();
+            $issuers = array();
             foreach ($child->getElementsByTagName('Issuer') as $issuer) {
                 $issuerModel = new Model\Issuer();
                 $issuerModel->setId($this->getTag($issuer, 'issuerID'));
                 $issuerModel->setName($this->getTag($issuer, 'issuerName'));
 
-                $list[] = $issuerModel;
+                $issuers[] = $issuerModel;
             }
 
-            $countries[$country] = $list;
+            $country = new Model\Country;
+            $country->setName($name);
+            $country->setIssuers($issuers);
+
+            $countries[] = $country;
         }
 
-        // @todo create a DirectoryResponse and insert all issuers there
-        return $countries;
+        $response = new Response\DirectoryResponse;
+        $response->setCountries($countries);
+
+        return $response;
     }
 
     /**
@@ -184,7 +190,7 @@ class StandardClient implements ClientInterface
         $transaction = new Model\Transaction();
         $transaction->setTransactionId($this->getTag($response, 'transactionID'));
         $transaction->setStatus($this->getTag($response, 'status'));
-        // statusDateTimestamp
+        // @todo add statusDateTimestamp
 
         $consumer = new Model\Consumer();
         $consumer->setName($this->getTag($response, 'consumerName'));

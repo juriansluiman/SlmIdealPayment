@@ -42,16 +42,10 @@
 
 namespace SlmIdealPayment\Model;
 
-use SlmIdealPayment\Exception;
-
 class Issuer
 {
-    const TYPE_SHORT = 'Short';
-    const TYPE_LONG  = 'Long';
-
     protected $id;
     protected $name;
-    protected $type;
 
     public function getId()
     {
@@ -72,24 +66,6 @@ class Issuer
     public function setName($name)
     {
         $this->name = $name;
-        return $this;
-    }
-
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    public function setType($type)
-    {
-        if (!in_array($type, array(self::TYPE_SHORT, self::TYPE_LONG))) {
-            throw new Exception\InvalidArgumentException(
-                'Type must be "%s" or "%s", "%s" given',
-                self::TYPE_SHORT, self::TYPE_LONG, $type
-            );
-        }
-
-        $this->type = $type;
         return $this;
     }
 }

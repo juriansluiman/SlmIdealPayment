@@ -32,8 +32,6 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIdealPayment
- * @subpackage  Model
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -42,8 +40,53 @@
 
 namespace SlmIdealPayment\Model;
 
-use ArrayObject;
-
-class IssuerCollection extends ArrayObject
+class Country
 {
+    protected $name;
+    protected $issuers;
+
+    /**
+     * Getter for name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Setter for name
+     *
+     * @param string $name Value to set
+     * @return self
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * Getter for issuers
+     *
+     * @return Issuer[]
+     */
+    public function getIssuers()
+    {
+        return $this->issuers;
+    }
+
+    /**
+     * Setter for issuers
+     *
+     * @param array $issuers Value to set
+     * @return self
+     */
+    public function setIssuers(array $issuers)
+    {
+        $this->issuers = $issuers;
+        return $this;
+    }
+
 }

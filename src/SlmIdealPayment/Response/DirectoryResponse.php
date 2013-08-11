@@ -42,20 +42,31 @@
 
 namespace SlmIdealPayment\Response;
 
-use SlmIdealPayment\Model\IssuerCollection;
+use SlmIdealPayment\Model\Country;
 
 class DirectoryResponse extends AbstractResponse
 {
-    protected $issuers;
+    protected $countries;
 
-    public function getIssuers()
+    /**
+     * Getter for countries
+     *
+     * @return Country[]
+     */
+    public function getCountries()
     {
-        return $this->issuers;
+        return $this->countries;
     }
 
-    public function setIssuers(IssuerCollection $issuers)
+    /**
+     * Setter for countries
+     *
+     * @param array $countries List of countries
+     * @return self
+     */
+    public function setCountries(array $countries)
     {
-        $this->issuers = $issuers;
+        $this->countries = $countries;
         return $this;
     }
 }
