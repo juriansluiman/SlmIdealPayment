@@ -165,17 +165,20 @@ have. However, you need to configure all variables yourself.
 
 ```php
 use SlmIdealPayment\Client\StandardClient;
+use SlmIdealPayment\Options\StandardClientOptions;
 
-$client = new StandardClient;
-$client->setRequestUrl('https://ideal.rabobank.nl/ideal/iDEALv3');
-$client->setMerchantId('00X0XXXXX');
-$client->setSubId('0');
+$options = new StandardClientOptions;
+$options->setRequestUrl('https://ideal.rabobank.nl/ideal/iDEALv3');
+$options->setMerchantId('00X0XXXXX');
+$options->setSubId('0');
 
-$client->setPublicCertificate('data/ssl/rabobank.cer');
-$client->setPrivateCertificate('data/ssl/cert.cer');
+$options->setPublicCertificate('data/ssl/rabobank.cer');
+$options->setPrivateCertificate('data/ssl/cert.cer');
 
-$client->setKeyFile('data/ssl/priv.pem');
-$client->setKeyPassword('h4x0r');
+$options->setKeyFile('data/ssl/priv.pem');
+$options->setKeyPassword('h4x0r');
+
+$client = new StandardClient($options);
 ```
 
 Now `$client` is configured, use above methods to perform the various requests.
