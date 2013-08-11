@@ -37,7 +37,7 @@ and save it in the root of your project:
 ```
 {
     "require": {
-        "slm/ideal-payment": "@dev"
+        "slm/ideal-payment": "@beta"
     }
 }
 ```

@@ -530,10 +530,7 @@ EOT;
         $document->loadXML($xml);
 
         $this->sign($document);
-
-        if (!$document->schemaValidate($this->getValidationSchema())) {
-            throw new Exception\XmlValidationException('Generated XML for status request could not be validated');
-        }
+        $this->validate($document);
 
         return $document;
     }
