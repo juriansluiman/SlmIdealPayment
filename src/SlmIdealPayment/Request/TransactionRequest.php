@@ -45,39 +45,69 @@ namespace SlmIdealPayment\Request;
 use SlmIdealPayment\Model\Issuer;
 use SlmIdealPayment\Model\Transaction;
 
-class TransactionRequest extends AbstractRequest
+class TransactionRequest implements RequestInterface
 {
+    /**
+     * @var Issuer
+     */
     protected $issuer;
+    /**
+     * @var Transaction
+     */
     protected $transaction;
+    /**
+     * @var string
+     */
     protected $returnUrl;
 
+    /**
+     * @return Issuer
+     */
     public function getIssuer()
     {
         return $this->issuer;
     }
 
+    /**
+     * @param Issuer $issuer
+     * @return $this
+     */
     public function setIssuer(Issuer $issuer)
     {
         $this->issuer = $issuer;
         return $this;
     }
 
+    /**
+     * @return Transaction
+     */
     public function getTransaction()
     {
         return $this->transaction;
     }
 
+    /**
+     * @param Transaction $transaction
+     * @return TransactionRequest
+     */
     public function setTransaction(Transaction $transaction)
     {
         $this->transaction = $transaction;
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getReturnUrl()
     {
         return $this->returnUrl;
     }
 
+    /**
+     * @param $returnUrl
+     * @return TransactionRequest
+     */
     public function setReturnUrl($returnUrl)
     {
         $this->returnUrl = $returnUrl;

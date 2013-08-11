@@ -42,26 +42,36 @@
 
 namespace SlmIdealPayment\Client;
 
-use SimpleXMLElement;
-use DateTime;
+use DOMDocument;
+use DOMNode;
 
 use SlmIdealPayment\Request;
 use SlmIdealPayment\Response;
 use SlmIdealPayment\Model;
+use SlmIdealPayment\Client\StandardClient\Signature;
 
-use Zend\Http\Client   as HttpClient;
+use Zend\Http\Client as HttpClient;
 use Zend\Http\Response as HttpResponse;
 
 use SlmIdealPayment\Exception;
 
 class StandardClient implements ClientInterface
 {
+    /**#@+
+     * @var string
+     */
     protected $requestUrl;
+    protected $merchantId;
+    protected $subId;
     protected $publicCertificate;
     protected $privateCertificate;
     protected $keyFile;
     protected $keyPassword;
+    protected $validationSchema;
 
+    /**
+     * @var HttpClient
+     */
     protected $httpClient;
 
     public function getRequestUrl()
@@ -119,6 +129,28 @@ class StandardClient implements ClientInterface
         return $this;
     }
 
+    /**
+     * Getter for validation schema
+     *
+     * @return mixed
+     */
+    public function getValidationSchema()
+    {
+        return $this->validationSchema;
+    }
+
+    /**
+     * Setter for validation schema
+     *
+     * @param mixed $validationSchema Value to set
+     * @return self
+     */
+    public function setValidationSchema($validationSchema)
+    {
+        $this->validationSchema = $validationSchema;
+        return $this;
+    }
+
     public function getHttpClient()
     {
         if (!$this->httpClient instanceof HttpClient) {
@@ -135,92 +167,126 @@ class StandardClient implements ClientInterface
     }
 
     /**
+     * @param mixed $merchantId
+     */
+    public function setMerchantId($merchantId)
+    {
+        $this->merchantId = $merchantId;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMerchantId()
+    {
+        return $this->merchantId;
+    }
+
+    /**
+     * @param mixed $subId
+     */
+    public function setSubId($subId)
+    {
+        $this->subId = $subId;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSubId()
+    {
+        return $this->subId;
+    }
+
+    /**
      * {@inheritdoc}
      */
-    public function sendDirectoryRequest(Request\DirectoryRequest $request)
+    public function send(Request\RequestInterface $request)
     {
-        // Prepare request
-        $message  = $this->createMessage($request, array(
-            $request->getMerchantId(),
-            $request->getSubId()
+        switch (get_class($request)) {
+            case 'SlmIdealPayment\Request\DirectoryRequest':
+                return $this->sendDirectoryRequest($request);
+                break;
+            case 'SlmIdealPayment\Request\TransactionRequest':
+                return $this->sendTransactionRequest($request);
+                break;
+            case 'SlmIdealPayment\Request\StatusRequest':
+                return $this->sendStatusRequest($request);
+                break;
+            default:
+                throw new Exception\InvalidArgumentException('Unknown class for send() proxy method');
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function sendDirectoryRequest(Request\DirectoryRequest $directoryRequest)
+    {
+        $xml = $this->createXmlForRequestIssuers(array(
+            'merchantId' => $this->getMerchantId(),
+            'subId'      => $this->getSubId(),
         ));
 
-        // Grab result and parse to XML object
-        $response = $this->send($message);
-        $xml      = $this->extractResponse($response);
+        $response = $this->request($xml);
 
-        // Create response object
-        $response = new Response\DirectoryResponse;
-        $acquirer = (string) $xml->Acquirer->acquirerID;
-        $response->setAcquirer($acquirer);
+        if ('DirectoryRes' !== $response->firstChild->nodeName) {
+            throw new Exception\IdealRequestException('Expecting DirectoryRes as root element in response');
+        }
 
-        $collection = new Model\IssuerCollection;
-        foreach ($xml->Directory->children() as $item) {
-            if ($item->getName() != 'Issuer') {
-                continue;
+        $countries = array();
+        foreach ($response->getElementsByTagName('Country') as $child) {
+            $country = $child->getElementsByTagName('countryNames')->item(0)->textContent;
+
+            $list = array();
+            foreach ($child->getElementsByTagName('Issuer') as $issuer) {
+                $issuerModel = new Model\Issuer();
+                $issuerModel->setId($this->getTag($issuer, 'issuerID'));
+                $issuerModel->setName($this->getTag($issuer, 'issuerName'));
+
+                $list[] = $issuerModel;
             }
 
-            $issuer = new Model\Issuer();
-            $issuer->setId((string) $item->issuerID);
-            $issuer->setName((string) $item->issuerName);
-            $issuer->setType((string) $item->issuerList);
-            $collection->append($issuer);
+            $countries[$country] = $list;
         }
-        $response->setIssuers($collection);
 
-        return $response;
+        // @todo create a DirectoryResponse and insert all issuers there
+        return $countries;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function sendTransactionRequest(Request\TransactionRequest $request)
+    public function sendTransactionRequest(Request\TransactionRequest $transactionRequest)
     {
-        // Prepare request
-        $message  = $this->createMessage($request, array(
-            $request->getIssuer()->getId(),
-            $request->getMerchantId(),
-            $request->getSubId(),
-            $request->getReturnUrl(),
-            $request->getTransaction()->getPurchaseId(),
-            $request->getTransaction()->getAmount(),
-            $request->getTransaction()->getCurrency(),
-            $request->getTransaction()->getLanguage(),
-            $request->getTransaction()->getDescription(),
-            $request->getTransaction()->getEntranceCode()
+        $xml = $this->_createXmlForRequestTransaction(array(
+            'issuerId'    => $transactionRequest->getIssuer()->getId(),
+            'merchantId'  => $this->getMerchantId(),
+            'subId'       => $this->getSubId(),
+            'returnUrl'   => $transactionRequest->getReturnUrl(),
+            'purchaseId'  => $transactionRequest->getTransaction()->getPurchaseId(),
+            'amount'      => $transactionRequest->getTransaction()->getAmount(),
+            'expiration'  => $transactionRequest->getTransaction()->getExpirationPeriod(),
+            'currency'    => $transactionRequest->getTransaction()->getCurrency(),
+            'language'    => $transactionRequest->getTransaction()->getLanguage(),
+            'description' => $transactionRequest->getTransaction()->getDescription(),
+            'entrance'    => $transactionRequest->getTransaction()->getEntranceCode()
         ));
 
-        $message->Merchant->addChild('merchantReturnURL', $request->getReturnUrl());
+        $response = $this->request($xml);
 
-        $issuer = $message->addChild('Issuer');
-        $issuer->addChild('issuerID', $request->getIssuer()->getId());
+        if ('AcquirerTrxRes' !== $response->firstChild->nodeName) {
+            throw new Exception\IdealRequestException('Expecting AcquirerTrxRes as root element in response');
+        }
 
-        $transaction = $message->addChild('Transaction');
-        $transaction->addChild('purchaseID',       $request->getTransaction()->getPurchaseId());
-        $transaction->addChild('amount',           $request->getTransaction()->getAmount());
-        $transaction->addChild('currency',         $request->getTransaction()->getCurrency());
-        $transaction->addChild('expirationPeriod', $request->getTransaction()->getExpirationPeriod());
-        $transaction->addChild('language',         $request->getTransaction()->getLanguage());
-        $transaction->addChild('description',      $request->getTransaction()->getDescription());
-        $transaction->addChild('entranceCode',     $request->getTransaction()->getEntranceCode());
+        $url = $this->getTag($response, 'issuerAuthenticationURL');
 
-        // Grab result and parse to XML object
-        $response = $this->send($message);
-        $xml      = $this->extractResponse($response);
+        $transaction = new Model\Transaction();
+        $transaction->setTransactionId($this->getTag($response, 'transactionID'));
+        $transaction->setPurchaseId($this->getTag($response, 'purchaseID'));
 
-        // Create response object
-        $response = new Response\TransactionResponse;
-        $acquirer = (string) $xml->Acquirer->acquirerID;
-        $url      = (string) $xml->Issuer->issuerAuthenticationURL;
-        $response->setAcquirer($acquirer);
+        $response = new Response\TransactionResponse();
         $response->setAuthenticationUrl($url);
-
-        $transaction   = new Model\Transaction;
-        $transactionId = (string) $xml->Transaction->transactionID;
-        $purchaseId    = (string) $xml->Transaction->purchaseID;
-        $transaction->setTransactionId($transactionId);
-        $transaction->setPurchaseId($purchaseId);
-
         $response->setTransaction($transaction);
 
         return $response;
@@ -229,187 +295,246 @@ class StandardClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function sendStatusRequest(Request\StatusRequest $request)
+    public function sendStatusRequest(Request\StatusRequest $statusRequest)
     {
-        // Prepare request
-        $message  = $this->createMessage($request, array(
-            $request->getMerchantId(),
-            $request->getSubId(),
-            $request->getTransaction()->getTransactionId()
-        ));
+        $xml = $this->_createXmlForRequestStatus(
+            array(
+                'merchantId'    => $this->getMerchantId(),
+                'subId'         => $this->getSubId(),
+                'transactionId' => $statusRequest->getTransaction()->getTransactionId()
+            )
+        );
 
-        $transaction = $message->addChild('Transaction');
-        $transaction->addChild('transactionID', $request->getTransaction()->getTransactionId());
+        $response = $this->request($xml);
 
-        // Grab result and parse to XML object
-        $response = $this->send($message);
-        $xml      = $this->extractResponse($response);
+        if ('AcquirerStatusRes' !== $response->firstChild->nodeName) {
+            throw new Exception\IdealRequestException('Expecting AcquirerStatusRes as root element in response');
+        }
 
-        // Create response object
-        $response    = new Response\StatusResponse;
-        $acquirer    = (string) $xml->Acquirer->acquirerID;
-        $signature   = (string) $xml->Signature->signatureValue;
-        $fingerprint = (string) $xml->Signature->fingerprint;
-        $response->setAcquirer($acquirer);
-        $response->setSignatureValue($signature);
-        $response->setFingerprint($fingerprint);
+        $transaction = new Model\Transaction();
+        $transaction->setTransactionId($this->getTag($response, 'transactionID'));
+        $transaction->setStatus($this->getTag($response, 'status'));
+        // statusDateTimestamp
 
-        $transaction   = new Model\Transaction;
-        $transactionId = (string) $xml->Transaction->transactionID;
-        $status        = (string) $xml->Transaction->status;
-        $transaction->setTransactionId($transactionId);
-        $transaction->setStatus($status);
+        $consumer = new Model\Consumer();
+        $consumer->setName($this->getTag($response, 'consumerName'));
+        $consumer->setAccountIBAN($this->getTag($response, 'consumerIBAN'));
+        $consumer->setAccountBIC($this->getTag($response, 'consumerBIC'));
 
-        $consumer = new Model\Consumer;
-        $name     = (string) $xml->Transaction->consumerName;
-        $account  = (string) $xml->Transaction->consumerAccountNumber;
-        $city     = (string) $xml->Transaction->consumerCity;
-        $consumer->setName($name);
-        $consumer->setAccountNumber($account);
-        $consumer->setCity($city);
+        $transaction->setAmount($this->getTag($response, 'amount'));
+        $transaction->setCurrency($this->getTag($response, 'currency'));
         $transaction->setConsumer($consumer);
 
+        $response = new Response\TransactionResponse();
         $response->setTransaction($transaction);
-
-        /**
-         * @todo Check signature and fingerprint if message is valid
-         */
 
         return $response;
     }
 
-    protected function createMessage(Request\RequestInterface $request, array $signedFields = array())
+    protected function request(DOMDocument $document)
     {
-        $class = get_class($request);
-        $class = substr($class, strrpos($class, '\\') + 1);
-
-        switch ($class) {
-            case 'DirectoryRequest':
-                $type = 'DirectoryReq';
-                break;
-            case 'TransactionRequest':
-                $type = 'AcquirerTrxReq';
-                break;
-            case 'StatusRequest':
-                $type = 'AcquirerStatusReq';
-                break;
-        }
-
-        // Start to create message
-        $xml = new SimpleXMLElement(sprintf('<?xml version="1.0" encoding="UTF-8"?><%1$s></%1$s>', $type));
-        $xml->addAttribute('xmlns', 'http://www.idealdesk.com/Message');
-        $xml->addAttribute('version', '1.1.0');
-
-        // Every message needs a time stamp
-        $date  = gmdate('Y-m-d\TH:i:s.000\Z');
-        $xml->addChild('createDateTimeStamp', $date);
-
-        // Set standard fields
-        $merchant = $xml->addChild('Merchant');
-        $merchant->addChild('merchantID', $request->getMerchantId());
-        $merchant->addChild('subID', $request->getSubId());
-        $merchant->addChild('authentication', 'SHA1_RSA');
-
-        // Set cryptographic fields
-        $fingerprint = $this->getFingerprint();
-        $signature   = $this->getMessageSignature($date, $signedFields);
-
-        $merchant->addChild('token', $fingerprint);
-        $merchant->addChild('tokenCode', $signature);
-
-        return $xml;
-    }
-
-    protected function getFingerprint($public = false)
-    {
-        $certificate = ($public) ? $this->getPublicCertificate() : $this->getPrivateCertificate();
-
-        if (false === ($fp = fopen($certificate, 'r'))) {
-            throw new Exception\CertificateNotFoundException(
-                sprintf('Cannot find the certificate at %s', $certificate)
-            );
-        }
-
-        $rawData = fread($fp, 8192);
-        $data    = openssl_x509_read($rawData);
-        fclose($fp);
-
-        if (!openssl_x509_export($data, $data)) {
-            throw new Exception\CertificateNotValidException(
-                sprintf('Certificate %s cannot be read due to errors in the file', $certificate)
-            );
-        }
-
-        $data = str_replace(array('-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----'), '', $data);
-        return strtoupper(sha1(base64_decode($data)));
-    }
-
-    protected function getMessageSignature($timestamp, array $signedFields)
-    {
-        $message = $timestamp;
-        foreach ($signedFields as $value) {
-            $message .= $value;
-        }
-
-        $message = str_replace(array(" ", "\t", "\n"), array('', '', ''), $message);
-        $keyFile = $this->getKeyFile();
-        $keyPwd  = $this->getKeyPassword();
-
-
-        if(false === ($fp = @fopen($this->keyFile, 'r'))) {
-            throw new Exception\CertificateNotFoundException(
-                sprintf('Cannot find the keyfile at %s', $keyFile)
-            );
-        }
-
-        $key = fread($fp, 8192);
-        fclose($fp);
-
-        if (!$privateKey = openssl_pkey_get_private($key, $keyPwd)) {
-            throw new Exception\CertificateNotValidException(
-                sprintf('Certificate %s cannot be opened with the provided password', $keyFile)
-            );
-        }
-
-        $signature = '';
-        if (!openssl_sign($message, $signature, $privateKey)) {
-            throw new Exception\CertificateNotValidException(
-                sprintf('Message cannot be signed with certificate %s due to errors in the file', $keyFile)
-            );
-        }
-
-        openssl_free_key($privateKey);
-        return base64_encode($signature);
-    }
-
-    protected function send(SimpleXMLElement $xml)
-    {
-        $data   = $xml->asXml();
-
         $client = $this->getHttpClient();
         $client->setUri($this->getRequestUrl());
-        $client->setRawBody($data);
-        return $client->send();
-    }
+        $client->setRawBody($document->saveXML());
 
-    protected function extractResponse(HttpResponse $response)
-    {
+        $response = $client->send();
+
         if (!$response->isOk()) {
+            // @todo supply status code + message
             throw new Exception\HttpRequestException(
                 'Request is not successfully executed'
             );
         }
 
         $body = $response->getBody();
-        $xml  = simplexml_load_string($body);
 
-        if (isset($xml->Error)) {
-            $error = $xml->Error;
+        $document = new DOMDocument;
+        $document->loadXML($body);
+
+        $this->verify($document);
+
+        $errors = $document->getElementsByTagName('Error');
+        if ($errors->length !== 0) {
+            $error = $errors->item(0);
+
+            $code    = $this->getTag($error, 'errorCode');
+            $message = $this->getTag($error, 'errorMessage');
+            $detail  = $this->getTag($error, 'errorDetail');
+
             throw new Exception\IdealRequestException(
-                sprintf('%s (%s): "%s"', $error->errorMessage, $error->errorCode, $error->errorDetail)
+                sprintf('%s (%s): "%s"', $message, $code, $detail)
             );
         }
 
-        return $xml;
+        return $document;
+    }
+
+    /**
+     * Sign document and append <Signature> dom node
+     *
+     * @param  DOMDocument $document
+     * @return void
+     */
+    protected function sign(DOMDocument $document)
+    {
+        $signature = new Signature;
+        $signature->sign($document, $this->getPrivateCertificate(), $this->getKeyFile(), $this->getKeyPassword());
+    }
+
+    /**
+     * Verify provided document
+     *
+     * @param  DOMDocument $document
+     * @throws Exception\IdealRequestException If the signature is not valid
+     * @return void
+     */
+    protected function verify(DOMDocument $document)
+    {
+        $signature = new Signature;
+
+        if (!$signature->verify($document, $this->getPublicCertificate())) {
+            throw new Exception\IdealRequestException('iDEAL response could not be verified from acquirer');
+        }
+    }
+
+    /**
+     * Validate XML document with XSD schema
+     *
+     * @param  DOMDocument $document
+     * @throws Exception\XmlValidationException If document is not valid
+     * @return void
+     */
+    protected function validate(DOMDocument $document)
+    {
+        if (null === ($schema = $this->getValidationSchema())) {
+            return;
+        }
+
+        if (!$document->schemaValidate($schema)) {
+            throw new Exception\XmlValidationException('Generated XML for directory request could not be validated');
+        }
+    }
+
+    protected function getTag(DOMNode $node, $tag)
+    {
+        return $node->getElementsByTagName($tag)
+                    ->item(0)
+                    ->textContent;
+    }
+
+    /**
+     * Create signed XML to request issuer listing
+     *
+     * @param  array $data
+     * @return DOMDocument
+     */
+    protected function createXmlForRequestIssuers(array $data)
+    {
+        $timestamp = utf8_encode(gmdate('Y-m-d\TH:i:s.000\Z'));
+        $merchant  = $data['merchantId'];
+        $subid     = $data['subId'];
+
+        $xml      = <<<EOT
+<?xml version="1.0" encoding="UTF-8"?>
+<DirectoryReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">
+  <createDateTimestamp>$timestamp</createDateTimestamp>
+  <Merchant>
+    <merchantID>$merchant</merchantID>
+    <subID>$subid</subID>
+  </Merchant>
+</DirectoryReq>
+EOT;
+        $document = new DOMDocument();
+        $document->loadXML($xml);
+
+        $this->sign($document);
+        $this->validate($document);
+
+        return $document;
+    }
+
+    protected function _createXmlForRequestTransaction(array $data)
+    {
+        $timestamp = utf8_encode(gmdate('Y-m-d\TH:i:s.000\Z'));
+
+        $issuer = $data['issuerId'];
+
+        $merchant  = $data['merchantId'];
+        $subid     = $data['subId'];
+        $returnUrl = $data['returnUrl'];
+
+        $purchaseId  = $data['purchaseId'];
+        $amount      = $data['amount'];
+        $currency    = $data['currency'];
+        $expiration  = $data['expiration'];
+        $language    = $data['language'];
+        $description = $data['description'];
+        $entrance    = $data['entrance'];
+
+        $xml      = <<<EOT
+<?xml version="1.0" encoding="UTF-8"?>
+<AcquirerTrxReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">
+  <createDateTimestamp>$timestamp</createDateTimestamp>
+  <Issuer>
+    <issuerID>$issuer</issuerID>
+  </Issuer>
+  <Merchant>
+    <merchantID>$merchant</merchantID>
+    <subID>$subid</subID>
+    <merchantReturnURL>$returnUrl</merchantReturnURL>
+  </Merchant>
+  <Transaction>
+    <purchaseID>$purchaseId</purchaseID>
+    <amount>$amount</amount>
+    <currency>$currency</currency>
+    <expirationPeriod>$expiration</expirationPeriod>
+    <language>$language</language>
+    <description>$description</description>
+    <entranceCode>$entrance</entranceCode>
+  </Transaction>
+</AcquirerTrxReq>
+EOT;
+        $document = new DOMDocument();
+        $document->loadXML($xml);
+
+        $this->sign($document);
+        $this->validate($document);
+
+        return $document;
+    }
+
+    protected function _createXmlForRequestStatus(array $data)
+    {
+        $timestamp = utf8_encode(gmdate('Y-m-d\TH:i:s.000\Z'));
+
+        $merchant = $data['merchantId'];
+        $subid    = $data['subId'];
+
+        $transactionId = $data['transactionId'];
+
+        $xml = <<<EOT
+<?xml version="1.0" encoding="UTF-8"?>
+<AcquirerStatusReq xmlns="http://www.idealdesk.com/ideal/messages/mer-acq/3.3.1" version="3.3.1">
+  <createDateTimestamp>$timestamp</createDateTimestamp>
+  <Merchant>
+    <merchantID>$merchant</merchantID>
+    <subID>$subid</subID>
+  </Merchant>
+  <Transaction>
+    <transactionID>$transactionId</transactionID>
+  </Transaction>
+</AcquirerStatusReq>
+EOT;
+
+        $document = new DOMDocument();
+        $document->loadXML($xml);
+
+        $this->sign($document);
+
+        if (!$document->schemaValidate($this->getValidationSchema())) {
+            throw new Exception\XmlValidationException('Generated XML for status request could not be validated');
+        }
+
+        return $document;
     }
 }

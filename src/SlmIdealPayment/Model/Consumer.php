@@ -45,7 +45,8 @@ namespace SlmIdealPayment\Model;
 class Consumer
 {
     protected $name;
-    protected $accountNumber;
+    protected $accountIBAN;
+    protected $accountBIC;
     protected $city;
 
     public function getName()
@@ -59,25 +60,51 @@ class Consumer
         return $this;
     }
 
-    public function getAccountNumber()
+    /**
+     * @param mixed $accountBIC
+     */
+    public function setAccountBIC($accountBIC)
     {
-        return $this->accountNumber;
+        $this->accountBIC = $accountBIC;
     }
 
-    public function setAccountNumber($accountNumber)
+    /**
+     * @return mixed
+     */
+    public function getAccountBIC()
     {
-        $this->accountNumber = $accountNumber;
-        return $this;
+        return $this->accountBIC;
     }
 
-    public function getCity()
+    /**
+     * @param mixed $accountIBAN
+     */
+    public function setAccountIBAN($accountIBAN)
     {
-        return $this->city;
+        $this->accountIBAN = $accountIBAN;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getAccountIBAN()
+    {
+        return $this->accountIBAN;
+    }
+
+    /**
+     * @param mixed $city
+     */
     public function setCity($city)
     {
         $this->city = $city;
-        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCity()
+    {
+        return $this->city;
     }
 }

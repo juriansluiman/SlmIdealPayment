@@ -44,23 +44,34 @@ namespace SlmIdealPayment\Model;
 
 class Transaction
 {
-    const STATUS_UNKNOWN   = 'Unknown';
-    const STATUS_OPEN      = 'Open';
-    const STATUS_SUCCESS   = 'Success';
-    const STATUS_FAILURE   = 'Failure';
-    const STATUS_CANCELLED = 'Cancelled';
-    const STATUS_EXPIRED   = 'Expired';
+    const STATUS_UNKNOWN     = 'Unknown';
+    const STATUS_OPEN        = 'Open';
+    const STATUS_SUCCESS     = 'Success';
+    const STATUS_FAILURE     = 'Failure';
+    const STATUS_CANCELLED   = 'Cancelled';
+    const STATUS_EXPIRED     = 'Expired';
 
+    const DEFAULT_EXPIRATION = 'PT15M';
+
+    /**#@+
+     * @var string
+     */
     protected $purchaseId;
     protected $amount;
-    protected $expirationPeriod;
+    protected $expirationPeriod = self::DEFAULT_EXPIRATION;
     protected $description;
     protected $entranceCode;
     protected $transactionId;
-
     protected $status = self::STATUS_UNKNOWN;
+
+    /**
+     * @var Consumer;
+     */
     protected $consumer;
 
+    /**#@+
+     * @var string
+     */
     protected $language = 'nl';
     protected $currency = 'EUR';
 
@@ -137,10 +148,19 @@ class Transaction
 
     public function setStatus($status)
     {
-        if (!in_array($status, array(
-            self::STATUS_UNKNOWN, self::STATUS_OPEN, self::STATUS_SUCCESS, self::STATUS_FAILURE, self::STATUS_CANCELLED, self::STATUS_EXPIRED
-        ))) {
-            throw new Exception\InvalidArgumentException(
+        if (!in_array(
+            $status,
+            array(
+                self::STATUS_UNKNOWN,
+                self::STATUS_OPEN,
+                self::STATUS_SUCCESS,
+                self::STATUS_FAILURE,
+                self::STATUS_CANCELLED,
+                self::STATUS_EXPIRED
+            )
+        )
+        ) {
+            throw new Exception(
                 'Cannot set status, "%s" is an invalid status', $status
             );
         }
@@ -149,10 +169,14 @@ class Transaction
         return $this;
     }
 
+    /**
+     * @return Consumer
+     * @throws RuntimeException
+     */
     public function getConsumer()
     {
         if (self::STATUS_UNKNOWN === $this->getStatus()) {
-            throw new Exception\RuntimeException(
+            throw new RuntimeException(
                 'Cannot get consumer, status of transaction is unkown'
             );
         }
@@ -169,12 +193,6 @@ class Transaction
     public function getLanguage()
     {
         return $this->language;
-    }
-
-    public function setLanguage($language)
-    {
-        $this->language = $language;
-        return $this;
     }
 
     public function getCurrency()

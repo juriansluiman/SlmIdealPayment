@@ -39,16 +39,18 @@
  * @link        http://juriansluiman.nl
  */
 
-use Zend\Http\Client as HttpClient;
-
 return array(
-    'ideal' => array(
+    'slm_ideal_payment' => array(
         'production'   => true,
         'merchant_id'  => '',
         'sub_id'       => '',
         'certificate'  => '',
         'key_file'     => '',
         'key_password' => '',
+
+        'enable_validation' => true,
+        'validation_scheme' => __DIR__ . '/../data/AcceptantAcquirer.xsd',
+
         'ssl_options'  => array(
             'sslcapath' => '/etc/ssl/certs',
         ),
@@ -62,10 +64,20 @@ return array(
             'live'        => 'https://ideal.secure-ing.com/ideal/iDeal',
             'certificate' => __DIR__ . '/../data/ing.cer',
         ),
-        'rabo'         => array(
-            'test'        => 'https://idealtest.rabobank.nl/ideal/iDeal',
-            'live'        => 'https://ideal.rabobank.nl/ideal/iDeal',
-            'certificate' => __DIR__ . '/../data/rabo.cer',
+        'rabobank'         => array(
+            'test'        => 'https://idealtest.rabobank.nl/ideal/iDEALv3',
+            'live'        => 'https://ideal.rabobank.nl/ideal/iDEALv3',
+            'certificate' => __DIR__ . '/../data/rabo_ideal_v3.cer',
+        ),
+    ),
+
+    'service_manager' => array(
+        'factories' => array(
+            'SlmIdealPayment\Client\StandardClient' => 'SlmIdealPayment\Service\StandardClientFactory',
+
+            'SlmIdealPayment\Client\Standard\Rabobank' => 'SlmIdealPayment\Service\StandardClientFactory',
+            'SlmIdealPayment\Client\Standard\Ing'      => 'SlmIdealPayment\Service\StandardClientFactory',
+            'SlmIdealPayment\Client\Standard\AbnAmro'  => 'SlmIdealPayment\Service\StandardClientFactory',
         ),
     ),
 );

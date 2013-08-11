@@ -32,40 +32,14 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package     SlmIdealPayment
- * @subpackage  Request
  * @author      Jurian Sluiman <jurian@juriansluiman.nl>
  * @copyright   2012 Jurian Sluiman.
  * @license     http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link        http://juriansluiman.nl
  */
 
-namespace SlmIdealPayment\Request;
+namespace SlmIdealPayment\Response;
 
-abstract class AbstractRequest implements RequestInterface
+interface ResponseInterface
 {
-    protected $merchantId;
-    protected $subId;
-
-    public function getMerchantId()
-    {
-        return $this->merchantId;
-    }
-
-    public function setMerchantId($merchantId)
-    {
-        $this->merchantId = $merchantId;
-        return $this;
-    }
-
-    public function getSubId()
-    {
-        return $this->subId;
-    }
-
-    public function setSubId($subId)
-    {
-        $this->subId = $subId;
-        return $this;
-    }
 }
