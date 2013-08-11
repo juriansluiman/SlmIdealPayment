@@ -42,7 +42,7 @@
 
 namespace SlmIdealPayment\Response;
 
-abstract class AbstractResponse
+abstract class AbstractResponse implements ResponseInterface
 {
     protected $acquirer;
 

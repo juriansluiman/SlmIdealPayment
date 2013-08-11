@@ -42,6 +42,6 @@
 
 namespace SlmIdealPayment\Request;
 
-class DirectoryRequest extends AbstractRequest
+class DirectoryRequest implements RequestInterface
 {
 }

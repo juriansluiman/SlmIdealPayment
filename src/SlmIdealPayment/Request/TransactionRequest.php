@@ -45,7 +45,7 @@ namespace SlmIdealPayment\Request;
 use SlmIdealPayment\Model\Issuer;
 use SlmIdealPayment\Model\Transaction;
 
-class TransactionRequest extends AbstractRequest
+class TransactionRequest implements RequestInterface
 {
     /**
      * @var Issuer
