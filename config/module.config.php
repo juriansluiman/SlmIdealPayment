@@ -49,25 +49,31 @@ return array(
         'key_password' => '',
 
         'enable_validation' => true,
-        'validation_scheme' => __DIR__ . '/../data/AcceptantAcquirer.xsd',
+        'validation_scheme' => __DIR__ . '/../data/xsd/AcceptantAcquirer.xsd',
 
-        'ssl_options'  => array(
+        'ssl_options' => array(
             'sslcapath' => '/etc/ssl/certs',
         ),
-        'abn'          => array(
-            'test'        => '',
-            'live'        => '',
-            'certificate' => __DIR__ . '/../data/abn.cer',
+        'abnamro' => array(
+            'test'        => 'abnamro-test.ideal-payment.de/ideal/iDEALv3',
+            'live'        => 'abnamro.ideal-payment.de/ideal/iDEALv3',
+            'certificate' => __DIR__ . '/../data/abnamro.cer',
         ),
-        'ing'          => array(
-            'test'        => 'https://idealtest.secure-ing.com/ideal/iDeal',
-            'live'        => 'https://ideal.secure-ing.com/ideal/iDeal',
-            'certificate' => __DIR__ . '/../data/ing.cer',
+        'frieslandbank' => array(
+            'test'        => 'https://testidealkassa.frieslandbank.nl/ideal/iDEALv3',
+            'live'        => 'https://idealkassa.frieslandbank.nl/ideal/iDEALv3',
+            'certificate' => __DIR__ . '/../data/certificate/frieslandbank.cer',
+
         ),
-        'rabobank'         => array(
+        'ing' => array(
+            'test'        => 'https://idealtest.secure-ing.com/ideal/iDEALv3',
+            'live'        => 'https://ideal.secure-ing.com/ideal/iDEALv3',
+            'certificate' => __DIR__ . '/../data/certificate/ingbank.cer',
+        ),
+        'rabobank' => array(
             'test'        => 'https://idealtest.rabobank.nl/ideal/iDEALv3',
             'live'        => 'https://ideal.rabobank.nl/ideal/iDEALv3',
-            'certificate' => __DIR__ . '/../data/rabo_ideal_v3.cer',
+            'certificate' => __DIR__ . '/../data/certificate/rabobank.cer',
         ),
     ),
 
