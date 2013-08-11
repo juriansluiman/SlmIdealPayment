@@ -42,6 +42,9 @@
 
 namespace SlmIdealPayment\Client;
 
+use SlmIdealPayment\Request\RequestInterface;
+use SlmIdealPayment\Response\ResponseInterface;
+
 use SlmIdealPayment\Request\DirectoryRequest;
 use SlmIdealPayment\Response\DirectoryResponse;
 
@@ -53,6 +56,14 @@ use SlmIdealPayment\Response\StatusResponse;
 
 interface ClientInterface
 {
+    /**
+     * Proxy to different request methods
+     *
+     * @param  RequestInterface $request
+     * @return ResponseInterface
+     */
+    public function send(RequestInterface $request);
+
     /**
      * Perform request to get directory of issuers
      *

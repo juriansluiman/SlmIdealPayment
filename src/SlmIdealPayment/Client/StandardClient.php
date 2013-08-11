@@ -201,6 +201,26 @@ class StandardClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
+    public function send(Request\RequestInterface $request)
+    {
+        switch (get_class($request)) {
+            case 'SlmIdealPayment\Request\DirectoryRequest':
+                return $this->sendDirectoryRequest($request);
+                break;
+            case 'SlmIdealPayment\Request\TransactionRequest':
+                return $this->sendTransactionRequest($request);
+                break;
+            case 'SlmIdealPayment\Request\StatusRequest':
+                return $this->sendStatusRequest($request);
+                break;
+            default:
+                throw new Exception\InvalidArgumentException('Unknown class for send() proxy method');
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function sendDirectoryRequest(Request\DirectoryRequest $directoryRequest)
     {
         $xml = $this->createXmlForRequestIssuers(array(
@@ -208,7 +228,7 @@ class StandardClient implements ClientInterface
             'subId'      => $this->getSubId(),
         ));
 
-        $response = $this->send($xml);
+        $response = $this->request($xml);
 
         if ('DirectoryRes' !== $response->firstChild->nodeName) {
             throw new Exception\IdealRequestException('Expecting DirectoryRes as root element in response');
@@ -253,7 +273,7 @@ class StandardClient implements ClientInterface
             'entrance'    => $transactionRequest->getTransaction()->getEntranceCode()
         ));
 
-        $response = $this->send($xml);
+        $response = $this->request($xml);
 
         if ('AcquirerTrxRes' !== $response->firstChild->nodeName) {
             throw new Exception\IdealRequestException('Expecting AcquirerTrxRes as root element in response');
@@ -285,7 +305,7 @@ class StandardClient implements ClientInterface
             )
         );
 
-        $response = $this->send($xml);
+        $response = $this->request($xml);
 
         if ('AcquirerStatusRes' !== $response->firstChild->nodeName) {
             throw new Exception\IdealRequestException('Expecting AcquirerStatusRes as root element in response');
@@ -311,7 +331,7 @@ class StandardClient implements ClientInterface
         return $response;
     }
 
-    protected function send(DOMDocument $document)
+    protected function request(DOMDocument $document)
     {
         $client = $this->getHttpClient();
         $client->setUri($this->getRequestUrl());
@@ -330,6 +350,7 @@ class StandardClient implements ClientInterface
 
         $document = new DOMDocument;
         $document->loadXML($body);
+
         $this->verify($document);
 
         $errors = $document->getElementsByTagName('Error');
@@ -391,7 +412,7 @@ class StandardClient implements ClientInterface
     {
         $signature = new Signature;
 
-        if ($signature->verify($document, $this->getPublicCertificate())) {
+        if (!$signature->verify($document, $this->getPublicCertificate())) {
             throw new Exception\IdealRequestException('iDEAL response could not be verified from acquirer');
         }
     }
@@ -414,9 +435,11 @@ class StandardClient implements ClientInterface
         }
     }
 
-    protected function getTag(DOMNode $element, $tag)
+    protected function getTag(DOMNode $node, $tag)
     {
-        return $element->getElementsByTagName($tag)->item(0)->textContent;
+        return $node->getElementsByTagName($tag)
+                    ->item(0)
+                    ->textContent;
     }
 
     /**
