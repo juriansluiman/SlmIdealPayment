@@ -67,6 +67,7 @@ class StandardClient implements ClientInterface
     protected $privateCertificate;
     protected $keyFile;
     protected $keyPassword;
+    protected $validationSchema;
 
     /**
      * @var HttpClient
@@ -329,10 +330,7 @@ class StandardClient implements ClientInterface
 
         $document = new DOMDocument;
         $document->loadXML($body);
-
-        if (!$this->isValid($document)) {
-            throw new Exception\IdealRequestException('iDEAL response is invalid');
-        }
+        $this->verify($document);
 
         $errors = $document->getElementsByTagName('Error');
         if ($errors->length !== 0) {
@@ -370,16 +368,50 @@ class StandardClient implements ClientInterface
         return strtoupper(sha1(base64_decode($data)));
     }
 
+    /**
+     * Sign document and append <Signature> dom node
+     *
+     * @param  DOMDocument $document
+     * @return void
+     */
     protected function sign(DOMDocument $document)
     {
         $signature = new Signature;
         $signature->sign($document, $this->getFingerprint(), $this->getKeyFile(), $this->getKeyPassword());
     }
 
-    protected function isValid(DOMDocument $document)
+    /**
+     * Verify provided document
+     *
+     * @param  DOMDocument $document
+     * @throws Exception\IdealRequestException If the signature is not valid
+     * @return void
+     */
+    protected function verify(DOMDocument $document)
     {
         $signature = new Signature;
-        return $signature->verify($document, $this->getPublicCertificate());
+
+        if ($signature->verify($document, $this->getPublicCertificate())) {
+            throw new Exception\IdealRequestException('iDEAL response could not be verified from acquirer');
+        }
+    }
+
+    /**
+     * Validate XML document with XSD schema
+     *
+     * @param  DOMDocument $document
+     * @throws Exception\XmlValidationException If document is not valid
+     * @return void
+     */
+    protected function validate(DOMDocument $document)
+    {
+        if (null === ($schema = $this->getValidationSchema())) {
+            return;
+        }
+
+        if (!$document->schemaValidate($schema)) {
+            throw new Exception\XmlValidationException('Generated XML for directory request could not be validated');
+        }
     }
 
     protected function getTag(DOMNode $element, $tag)
@@ -413,10 +445,7 @@ EOT;
         $document->loadXML($xml);
 
         $this->sign($document);
-
-        if (!$document->schemaValidate($this->getValidationSchema())) {
-            throw new Exception\XmlValidationException('Generated XML for directory request could not be validated');
-        }
+        $this->validate($document);
 
         return $document;
     }
@@ -466,10 +495,7 @@ EOT;
         $document->loadXML($xml);
 
         $this->sign($document);
-
-        if (!$document->schemaValidate($this->getValidationSchema())) {
-            throw new Exception\XmlValidationException('Generated XML for transaction request could not be validated');
-        }
+        $this->validate($document);
 
         return $document;
     }
