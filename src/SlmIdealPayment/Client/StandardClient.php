@@ -221,6 +221,7 @@ class StandardClient implements ClientInterface
         $document = new DOMDocument;
         $document->loadXML($body);
 
+        $this->validate($document);
         $this->verify($document);
 
         $errors = $document->getElementsByTagName('Error');
