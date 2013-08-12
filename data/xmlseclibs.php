@@ -557,7 +557,7 @@ class XMLSecurityKey
         return $this->cryptParams['method'];
     }
 
-    static function makeAsnSegment($type, $string)
+    public static function makeAsnSegment($type, $string)
     {
         switch ($type) {
             case 0x02:
@@ -590,7 +590,7 @@ class XMLSecurityKey
 
     /* Modulus and Exponent must already be base64 decoded */
 
-    static function convertRSA($modulus, $exponent)
+    public static function convertRSA($modulus, $exponent)
     {
         /* make an ASN publicKeyInfo */
         $exponentEncoding       = XMLSecurityKey::makeAsnSegment(0x02, $exponent);
@@ -714,7 +714,7 @@ class XMLSecurityDSig
         return $this->xPathCtx;
     }
 
-    static function generate_GUID($prefix = 'pfx')
+    public static function generate_GUID($prefix = 'pfx')
     {
         $uuid = md5(uniqid(rand(), true));
         $guid = $prefix . substr($uuid, 0, 8) . "-" .
@@ -1320,7 +1320,7 @@ class XMLSecurityDSig
         return $this->insertSignature($parentNode, $beforeNode);
     }
 
-    static function get509XCert($cert, $isPEMFormat = true)
+    public static function get509XCert($cert, $isPEMFormat = true)
     {
         $certs = XMLSecurityDSig::staticGet509XCerts($cert, $isPEMFormat);
         if (!empty($certs)) {
@@ -1329,7 +1329,7 @@ class XMLSecurityDSig
         return '';
     }
 
-    static function staticGet509XCerts($certs, $isPEMFormat = true)
+    public static function staticGet509XCerts($certs, $isPEMFormat = true)
     {
         if ($isPEMFormat) {
             $data     = '';
@@ -1357,7 +1357,7 @@ class XMLSecurityDSig
         }
     }
 
-    static function staticAdd509Cert($parentRef, $cert, $isPEMFormat = true, $isURL = false, $xpath = null)
+    public static function staticAdd509Cert($parentRef, $cert, $isPEMFormat = true, $isURL = false, $xpath = null)
     {
         if ($isURL) {
             $cert = file_get_contents($cert);
@@ -1412,7 +1412,7 @@ class XMLSecurityDSig
         }
     }
 
-    function addKeyInfoAndName($keyName, $xpath = null)
+    public function addKeyInfoAndName($keyName, $xpath = null)
     {
 
         $baseDoc = $this->sigNode->ownerDocument;
@@ -1773,7 +1773,7 @@ class XMLSecEnc
         return null;
     }
 
-    static function staticLocateKeyInfo($objBaseKey = null, $node = null)
+    public static function staticLocateKeyInfo($objBaseKey = null, $node = null)
     {
         if (empty($node) || (!$node instanceof DOMNode)) {
             return null;
