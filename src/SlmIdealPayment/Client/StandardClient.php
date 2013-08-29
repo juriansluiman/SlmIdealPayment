@@ -187,19 +187,25 @@ class StandardClient implements ClientInterface
             throw new Exception\IdealRequestException('Expecting AcquirerStatusRes as root element in response');
         }
 
+        $status      = $this->getTag($response, 'status');
         $transaction = new Model\Transaction();
         $transaction->setTransactionId($this->getTag($response, 'transactionID'));
-        $transaction->setStatus($this->getTag($response, 'status'));
-        // @todo add statusDateTimestamp
+        $transaction->setStatus($status);
 
-        $consumer = new Model\Consumer();
-        $consumer->setName($this->getTag($response, 'consumerName'));
-        $consumer->setAccountIBAN($this->getTag($response, 'consumerIBAN'));
-        $consumer->setAccountBIC($this->getTag($response, 'consumerBIC'));
+        if ($status !== Model\Transaction::STATUS_OPEN) {
+            // @todo add statusDateTimestamp
+        }
 
-        $transaction->setAmount($this->getTag($response, 'amount'));
-        $transaction->setCurrency($this->getTag($response, 'currency'));
-        $transaction->setConsumer($consumer);
+        if ($status === Model\Transaction::STATUS_SUCCESS) {
+            $consumer = new Model\Consumer();
+            $consumer->setName($this->getTag($response, 'consumerName'));
+            $consumer->setAccountIBAN($this->getTag($response, 'consumerIBAN'));
+            $consumer->setAccountBIC($this->getTag($response, 'consumerBIC'));
+
+            $transaction->setAmount($this->getTag($response, 'amount'));
+            $transaction->setCurrency($this->getTag($response, 'currency'));
+            $transaction->setConsumer($consumer);
+        }
 
         $response = new Response\TransactionResponse();
         $response->setTransaction($transaction);
