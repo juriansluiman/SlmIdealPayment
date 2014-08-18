@@ -96,7 +96,7 @@ $client = $sl->get('SlmIdealPayment\Client\Standard\Rabobank');
 $request  = new DirectoryRequest;
 $response = $client->send($request);
 
-foreach ($response->getContries() as $country) {
+foreach ($response->getCountries() as $country) {
     echo sprintf("Country: %s\n", $country->getName());
 
     foreach ($country->getIssuers() as $issuer) {
